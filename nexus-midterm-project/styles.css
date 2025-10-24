@@ -1,0 +1,96 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+  }
+  
+  /* Layout container */
+  body {
+    display: flex;
+    height: 100vh;
+  }
+  
+  /* Left side (gray background) */
+  .left-panel {
+    flex: 2;
+    background-color: #999; /* Matches the gray shade in the image */
+  }
+  
+  /* Right side (white login section) */
+  .right-panel {
+    flex: 1;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  
+  /* Logo styling */
+  .logo {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  /* Title text */
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 30px;
+  }
+  
+  /* Input fields */
+  input[type="email"],
+  input[type="password"] {
+    width: 250px;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #999;
+    border-radius: 5px;
+    outline: none;
+    transition: 0.2s;
+  }
+  
+  input[type="email"]:focus,
+  input[type="password"]:focus {
+    border-color: #000;
+  }
+  
+  /* Buttons */
+  button {
+    padding: 8px 20px;
+    margin: 10px 5px;
+    border: 1px solid #000;
+    border-radius: 6px;
+    background-color: #fff;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  
+  button:hover {
+    background-color: #000;
+    color: #fff;
+  }
+  
+  /* Responsive layout */
+  @media (max-width: 900px) {
+    body {
+      flex-direction: column;
+    }
+  
+    .left-panel {
+      height: 40vh;
+    }
+  
+    .right-panel {
+      height: 60vh;
+    }
+  }
+  
