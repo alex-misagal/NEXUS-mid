@@ -45,6 +45,43 @@ app.post('/login', (req, res) => {
     }
   });
 });
+app.post('/register', (req, res) => {
+  const { Fname, Lname, Email, Password, PhoneNumber } = req.body;
 
+  console.log('📩 Registration data received:', req.body);
+
+  if (!Fname || !Lname || !Email || !Password || !PhoneNumber) {
+    console.log('⚠️ Missing fields');
+    return res.json({ success: false, message: 'Please fill in all fields.' });
+  }
+
+  const checkEmail = 'SELECT * FROM user WHERE Email = ?';
+  db.query(checkEmail, [Email], (err, results) => {
+    if (err) {
+      console.error('❌ Email check failed:', err);
+      return res.status(500).json({ success: false, message: 'Server error.' });
+    }
+
+    if (results.length > 0) {
+      console.log('⚠️ Email already exists:', Email);
+      return res.json({ success: false, message: 'Email already registered.' });
+    }
+
+    const insertQuery = `
+      INSERT INTO user (Fname, Lname, Email, Password, PhoneNumber, PCount)
+      VALUES (?, ?, ?, ?, ?, 0)
+    `;
+    db.query(insertQuery, [Fname, Lname, Email, Password, PhoneNumber], (err2, result) => {
+      if (err2) {
+        console.error('❌ Insert failed:', err2);
+        return res.status(500).json({ success: false, message: 'Failed to register user.' });
+      }
+
+      console.log('✅ User registered successfully:', result.insertId);
+      res.json({ success: true, message: 'User registered successfully!' });
+    });
+  });
+});
 // Start the server
 app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
+
