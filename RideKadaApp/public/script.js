@@ -14,6 +14,7 @@ async function login() {
   if (data.success) {
     message.style.color = 'green';
     message.textContent = `Welcome, ${data.user.Fname}!`;
+    showUser(data.user); 
 
     // ✅ Store user info in localStorage to use later in home.html
     localStorage.setItem('user', JSON.stringify(data.user));
