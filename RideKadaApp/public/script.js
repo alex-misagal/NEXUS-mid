@@ -14,6 +14,7 @@ async function login() {
   if (data.success) {
     message.style.color = 'green';
     message.textContent = `Welcome, ${data.user.Fname}!`;
+    showUser(data.user); 
   } else {
     message.style.color = 'red';
     message.textContent = data.message;
