@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results - Nexus</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #a8d5e2 0%, #e8f4f8 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 20px 40px;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .logo span {
+            background-color: #1a5490;
+            color: white;
+            padding: 5px 15px;
+            margin-left: 10px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .search-box {
+            padding: 8px 15px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            width: 200px;
+        }
+
+        .user-icon {
+            width: 40px;
+            height: 40px;
+            background-color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .results-table {
+            width: 100%;
+            background-color: white;
+            border-collapse: collapse;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .results-table thead {
+            background-color: #f0f0f0;
+        }
+
+        .results-table th {
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            border: 1px solid #ddd;
+            color: #333;
+        }
+
+        .results-table td {
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+            color: #333;
+        }
+
+        .results-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .results-table tbody tr:hover {
+            background-color: #e3f2fd;
+            cursor: pointer;
+            transform: scale(1.01);
+        }
+
+        .results-table tbody tr.selected {
+            background-color: #bbdefb;
+            border-left: 4px solid #1a5490;
+        }
+
+        .results-table tbody tr.selected:hover {
+            background-color: #90caf9;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 35px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-cancel {
+            background-color: #333;
+            color: white;
+        }
+
+        .btn-ok {
+            background-color: #333;
+            color: white;
+        }
+
+        .btn-ok:disabled {
+            background-color: #999;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        .destination-cell {
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            Search<span>Nexus</span>
+        </div>
+        <div class="header-right">
+            <input type="text" class="search-box" placeholder="Search">
+            <div class="user-icon">👤</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>Driver Name</th>
+                    <th>Going to</th>
+                    <th>Date</th>
+                    <th>Vehicle Capacity</th>
+                    <th>Contact</th>
+                </tr>
+            </thead>
+            <tbody id="driverTableBody">
+                <!-- Data will be inserted here by JavaScript -->
+            </tbody>
+        </table>
+
+        <div class="button-container">
+            <button class="btn btn-cancel" onclick="handleCancel()">Cancel</button>
+            <button class="btn btn-ok" id="okButton" onclick="handleOk()" disabled>Ok</button>
+        </div>
+    </div>
+
+    <script>
+        // Driver data from your database
+        const drivers = [
+            { id: 1, phone: '09981230001', fname: 'Carlos', lname: 'Mendoza', email: 'carlosm@gmail.com', status: 'Active', destination: 'Session Road, Barangay Kabayanihan, Baguio City, B...', vehicleId: 1 },
+            { id: 2, phone: '09981230002', fname: 'Jayson', lname: 'Reyes', email: 'jaysonr@gmail.com', status: 'Active', destination: 'La Trinidad Public Market, Km 5, Barangay Poblacio...', vehicleId: 2 },
+            { id: 3, phone: '09981230003', fname: 'Arthur', lname: 'Lim', email: 'arthurl@gmail.com', status: 'Suspended', destination: 'Tuba Town Proper, Barangay Poblacion, Tuba, Bengue...', vehicleId: 3 },
+            { id: 4, phone: '09981230004', fname: 'Leo', lname: 'Tan', email: 'leotan@gmail.com', status: 'Active', destination: 'Itogon Central Barangay Hall, Poblacion, Itogon, B...', vehicleId: 4 },
+            { id: 5, phone: '09981230005', fname: 'Mark', lname: 'Santos', email: 'marks@gmail.com', status: 'Active', destination: 'Sablan Municipal Hall, Poblacion, Sablan, Benguet ...', vehicleId: 5 },
+            { id: 6, phone: '09981230006', fname: 'Joshua', lname: 'Cruz', email: 'joshuac@gmail.com', status: 'Active', destination: 'Burnham Park, Jose Abad Santos Drive, Baguio City,...', vehicleId: 6 },
+            { id: 7, phone: '09981230007', fname: 'Nathan', lname: 'Rivera', email: 'nathanr@gmail.com', status: 'Active', destination: 'Tublay Trading Post, Poblacion, Tublay, Benguet 26...', vehicleId: 7 },
+            { id: 8, phone: '09981230008', fname: 'Patrick', lname: 'Tan', email: 'patrickt@gmail.com', status: 'Active', destination: 'Benguet State University, Km 6, La Trinidad, Bengu...', vehicleId: 8 },
+            { id: 9, phone: '09981230009', fname: 'Rico', lname: 'Delos Reyes', email: 'ricodr@gmail.com', status: 'Suspended', destination: 'SM Baguio Terminal, Upper Session Road, Baguio Cit...', vehicleId: 9 },
+            { id: 10, phone: '09981230010', fname: 'Dennis', lname: 'Villanueva', email: 'dennisv@gmail.com', status: 'Active', destination: 'Mines View Park, Outlook Drive, Baguio City, Bengu...', vehicleId: 10 },
+            { id: 11, phone: '09981230011', fname: 'Ken', lname: 'Morales', email: 'kenm@gmail.com', status: 'Active', destination: 'Ambuklao Dam, Barangay Ambuklao, Bokod, Benguet 26...', vehicleId: 11 },
+            { id: 12, phone: '09981230012', fname: 'Oscar', lname: 'Lopez', email: 'oscarl@gmail.com', status: 'Active', destination: 'Northern Barangay Hall, Poblacion, Atok, Benguet 2...', vehicleId: 12 },
+            { id: 13, phone: '09981230013', fname: 'Sam', lname: 'Flores', email: 'samf@gmail.com', status: 'Active', destination: 'Sablan Viewdeck, Sitio Banangan, Sablan, Benguet 2...', vehicleId: 13 },
+            { id: 14, phone: '09981230014', fname: 'Gino', lname: 'Santiago', email: 'ginos@gmail.com', status: 'Active', destination: 'Tublay Municipal Hall, Barangay Ambongdolan, Tubla...', vehicleId: 14 },
+            { id: 15, phone: '09981230015', fname: 'Allan', lname: 'Ramos', email: 'allanr@gmail.com', status: 'Active', destination: 'Our Lady of Atonement Cathedral, Upper Session Roa...', vehicleId: 15 }
+        ];
+
+        const vehicles = [
+            { id: 1, plateNumber: 'ABC1234', model: 'Toyota Vios', color: 'Red', capacity: 4 },
+            { id: 2, plateNumber: 'XYZ5678', model: 'Honda City', color: 'Black', capacity: 4 },
+            { id: 3, plateNumber: 'JKL2345', model: 'Mitsubishi Mirage', color: 'White', capacity: 4 },
+            { id: 4, plateNumber: 'RTY4567', model: 'Hyundai Accent', color: 'Gray', capacity: 4 },
+            { id: 5, plateNumber: 'BNM6789', model: 'Suzuki Dzire', color: 'Silver', capacity: 4 },
+            { id: 6, plateNumber: 'PLK1234', model: 'Toyota Innova', color: 'Blue', capacity: 6 },
+            { id: 7, plateNumber: 'MNO3456', model: 'Honda BR-V', color: 'Gray', capacity: 6 },
+            { id: 8, plateNumber: 'QWE9876', model: 'Toyota Avanza', color: 'White', capacity: 6 },
+            { id: 9, plateNumber: 'ZXC6543', model: 'Ford EcoSport', color: 'Orange', capacity: 4 },
+            { id: 10, plateNumber: 'ASD3210', model: 'Nissan Almera', color: 'Black', capacity: 4 },
+            { id: 11, plateNumber: 'HJK1122', model: 'Honda Civic', color: 'Red', capacity: 4 },
+            { id: 12, plateNumber: 'VBN4455', model: 'Toyota Corolla', color: 'White', capacity: 4 },
+            { id: 13, plateNumber: 'TYU5566', model: 'Hyundai Tucson', color: 'Gray', capacity: 6 },
+            { id: 14, plateNumber: 'IOP6677', model: 'Suzuki Ertiga', color: 'Silver', capacity: 6 },
+            { id: 15, plateNumber: 'GHJ7788', model: 'Nissan Terra', color: 'Black', capacity: 7 }
+        ];
+
+        // Get current date formatted
+        function getCurrentDate() {
+            const today = new Date();
+            const options = { year: 'numeric', month: 'short', day: '2-digit' };
+            return today.toLocaleDateString('en-US', options);
+        }
+
+        // Track selected driver
+        let selectedDriver = null;
+        const okButton = document.getElementById('okButton');
+
+        // Handle row selection
+        function selectRow(row, driver) {
+            // Remove previous selection
+            const previouslySelected = document.querySelector('.results-table tbody tr.selected');
+            if (previouslySelected) {
+                previouslySelected.classList.remove('selected');
+            }
+
+            // If clicking the same row, deselect it
+            if (previouslySelected === row) {
+                selectedDriver = null;
+                okButton.disabled = true;
+                return;
+            }
+
+            // Select new row
+            row.classList.add('selected');
+            selectedDriver = driver;
+            okButton.disabled = false;
+        }
+
+        // Populate table with driver data
+        function populateTable() {
+            const tbody = document.getElementById('driverTableBody');
+            const currentDate = getCurrentDate();
+            
+            // Only show active drivers
+            const activeDrivers = drivers.filter(driver => driver.status === 'Active');
+            
+            activeDrivers.forEach(driver => {
+                const vehicle = vehicles.find(v => v.id === driver.vehicleId);
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${driver.fname} ${driver.lname}</td>
+                    <td class="destination-cell" title="${driver.destination}">${driver.destination}</td>
+                    <td>${currentDate}</td>
+                    <td>${vehicle ? vehicle.capacity + ' People' : 'N/A'}</td>
+                    <td>${driver.phone}</td>
+                `;
+                
+                // Add click event to row
+                row.addEventListener('click', () => selectRow(row, driver));
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function handleCancel() {
+            window.history.back();
+        }
+
+        function handleOk() {
+            alert('Selection confirmed');
+        }
+
+        // Load data when page loads
+        populateTable();
+    </script>
+</body>
+</html>
