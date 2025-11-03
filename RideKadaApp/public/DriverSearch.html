@@ -223,7 +223,7 @@
         // Fetch drivers from server
         async function fetchDrivers() {
             try {
-                const response = await fetch('http://localhost:3000/api/drivers');
+                const response = await fetch('http://localhost:3001/api/drivers');
                 if (!response.ok) {
                     throw new Error('Failed to fetch drivers');
                 }
