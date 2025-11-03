@@ -1,4 +1,4 @@
-// Login
+
 async function login() {
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
@@ -72,3 +72,4 @@ async function submitSignup() {
     msg.textContent = 'Failed to connect to server.';
   }
 }
+
