@@ -137,7 +137,7 @@ while ($row = $result->fetch_assoc()) {
       document.getElementById('modal-date').value = searchParams.date;
       document.getElementById('modal-passengers').value = searchParams.passengers + " People";
       document.getElementById('modal-fare').value = "₱ 0.00"; // You can calculate fare based on your logic
-      document.getElementById('modal-status').value = driver.Capacity - searchParams.passengers + " of " + driver.Capacity + " seats available";
+      document.getElementById('modal-status').value = (driver.Capacity - searchParams.passengers) + " of " + driver.Capacity + " seats available";
       
       document.getElementById('modal-driver-name').textContent = driver.Fname + " " + driver.Lname;
       document.getElementById('modal-driver-plate').textContent = driver.PlateNumber;
@@ -153,9 +153,38 @@ while ($row = $result->fetch_assoc()) {
     }
 
     function confirmBooking() {
-      alert("Booking confirmed for Driver ID: " + selectedDriver);
-      closeModal();
-      // Here you can add code to submit the booking to the server
+      if (!selectedDriver) {
+        alert("Please select a driver first");
+        return;
+      }
+      
+      const driver = driversData.find(d => d.DriverID == selectedDriver);
+      if (!driver) return;
+
+      // Calculate a sample fare (you can customize this logic)
+      const baseFare = 50;
+      const farePerPassenger = 17;
+      const totalFare = baseFare + (searchParams.passengers * farePerPassenger);
+
+      // Build URL with booking details
+      const params = new URLSearchParams({
+        driverId: driver.DriverID,
+        driverName: driver.Fname + ' ' + driver.Lname,
+        driverPhone: driver.PhoneNumber,
+        driverEmail: driver.Email || '',
+        vehicle: driver.Color + ' ' + driver.Model,
+        plateNumber: driver.PlateNumber,
+        from: searchParams.from || 'Maryheights',
+        to: searchParams.to,
+        date: searchParams.date,
+        passengers: searchParams.passengers,
+        fare: totalFare.toFixed(2),
+        availableSeats: driver.Capacity - searchParams.passengers,
+        totalSeats: driver.Capacity
+      });
+
+      // Redirect to payment page (go up one directory level)
+      window.location.href = '../Payment.html?' + params.toString();
     }
 
     function handleCancel() {
@@ -177,7 +206,7 @@ while ($row = $result->fetch_assoc()) {
   <div class="logo">Ride<span>Kada</span></div>
   <div class="header-right">
     <input type="text" class="search-box" placeholder="Search drivers...">
-    <div class="user-icon">Profile</div>
+    <div class="user-icon">👤</div>
   </div>
 </div>
 

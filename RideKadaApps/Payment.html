@@ -397,7 +397,7 @@
     <div class="payment-left">
       <div class="amount-section">
         <div class="amount-label">Amount to pay:</div>
-        <div class="amount-display" id="amountDisplay">₱67.00</div>
+        <div class="amount-display" id="amountDisplay">₱0.00</div>
       </div>
 
       <div class="payment-method-section">
@@ -426,24 +426,44 @@
         <h3>Booking details:</h3>
         
         <div class="detail-group">
-          <div class="detail-label">Passenger</div>
-          <input type="text" class="detail-input" id="passengerName" value="Jane Doe" readonly>
+          <div class="detail-label">Driver Name</div>
+          <input type="text" class="detail-input" id="driverName" readonly>
         </div>
 
         <div class="detail-group">
-          <div class="detail-label">Mobile No.</div>
-          <input type="text" class="detail-input" id="mobileNo" value="+63912345678" readonly>
+          <div class="detail-label">Contact No.</div>
+          <input type="text" class="detail-input" id="driverPhone" readonly>
+        </div>
+
+        <div class="detail-group">
+          <div class="detail-label">Vehicle</div>
+          <input type="text" class="detail-input" id="vehicle" readonly>
+        </div>
+
+        <div class="detail-group">
+          <div class="detail-label">From</div>
+          <input type="text" class="detail-input" id="fromLocation" readonly>
         </div>
 
         <div class="detail-group">
           <div class="detail-label">Destination</div>
-          <input type="text" class="detail-input" id="destination" value="Igorot Park." readonly>
+          <input type="text" class="detail-input" id="destination" readonly>
+        </div>
+
+        <div class="detail-group">
+          <div class="detail-label">Date</div>
+          <input type="text" class="detail-input" id="rideDate" readonly>
+        </div>
+
+        <div class="detail-group">
+          <div class="detail-label">Passengers</div>
+          <input type="text" class="detail-input" id="passengers" readonly>
         </div>
 
         <div class="payment-btn-section">
           <div class="detail-label">Booking Payment:</div>
           <button class="pay-btn" id="payBtn" onclick="processPayment()">
-            Pay ₱67.00 Via GCash
+            Pay ₱0.00 Via GCash
           </button>
         </div>
       </div>
@@ -477,17 +497,64 @@
 
   <script>
     let selectedPaymentMethod = 'GCash';
-    const amount = 67.00;
+    let bookingData = {};
 
-    // Get URL parameters (for integration with search results)
+    // Get URL parameters
     const urlParams = new URLSearchParams(window.location.search);
-    const driverId = urlParams.get('driverId');
-    const fare = urlParams.get('fare');
     
-    if (fare) {
-      document.getElementById('amountDisplay').textContent = `₱${parseFloat(fare).toFixed(2)}`;
+    // Extract booking data from URL
+    bookingData = {
+      driverId: urlParams.get('driverId'),
+      driverName: urlParams.get('driverName'),
+      driverPhone: urlParams.get('driverPhone'),
+      driverEmail: urlParams.get('driverEmail'),
+      vehicle: urlParams.get('vehicle'),
+      plateNumber: urlParams.get('plateNumber'),
+      from: urlParams.get('from'),
+      to: urlParams.get('to'),
+      date: urlParams.get('date'),
+      passengers: urlParams.get('passengers'),
+      fare: urlParams.get('fare'),
+      availableSeats: urlParams.get('availableSeats'),
+      totalSeats: urlParams.get('totalSeats')
+    };
+
+    // Populate fields with booking data
+    window.onload = function() {
+      if (bookingData.fare) {
+        document.getElementById('amountDisplay').textContent = `₱${parseFloat(bookingData.fare).toFixed(2)}`;
+      }
+      
+      if (bookingData.driverName) {
+        document.getElementById('driverName').value = bookingData.driverName;
+      }
+      
+      if (bookingData.driverPhone) {
+        document.getElementById('driverPhone').value = bookingData.driverPhone;
+      }
+      
+      if (bookingData.vehicle) {
+        document.getElementById('vehicle').value = bookingData.vehicle + ' (' + bookingData.plateNumber + ')';
+      }
+      
+      if (bookingData.from) {
+        document.getElementById('fromLocation').value = bookingData.from;
+      }
+      
+      if (bookingData.to) {
+        document.getElementById('destination').value = bookingData.to;
+      }
+      
+      if (bookingData.date) {
+        document.getElementById('rideDate').value = bookingData.date;
+      }
+      
+      if (bookingData.passengers) {
+        document.getElementById('passengers').value = bookingData.passengers + ' passenger(s)';
+      }
+      
       updatePayButton();
-    }
+    };
 
     function selectPayment(method, element) {
       // Remove selected class from all options
@@ -519,7 +586,7 @@
 
     function confirmCancel() {
       closeCancelModal();
-      // Redirect back to search results or home
+      // Redirect back to home
       window.location.href = 'home.html';
     }
 
@@ -531,11 +598,12 @@
       // Simulate payment processing
       setTimeout(() => {
         // In a real implementation, you would:
-        // 1. Create a booking record
+        // 1. Create a booking record in the database
         // 2. Create a payment record
         // 3. Update driver availability
+        // 4. Send confirmation email/SMS
         
-        // Show success modal
+        // For now, we'll just show the success modal
         document.getElementById('successModal').style.display = 'flex';
       }, 1500);
     }
