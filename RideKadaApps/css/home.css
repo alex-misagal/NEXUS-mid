@@ -23,13 +23,9 @@ body {
 .logo-circle {
   width: 35px;
   height: 35px;
-  background: #0077ff;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
+  object-fit: cover;
+  display: block;
 }
 
 .brand-name {
@@ -69,9 +65,9 @@ body {
   justify-content: center;
   color: white;
   cursor: pointer;
-  font-size: 12px;
-  user-select: none;
+  font-size: 18px;
 }
+
 
 /* PROFILE DROPDOWN */
 .profile-wrapper {
@@ -123,13 +119,19 @@ body {
   background: #fdf2f2;
 }
 
-/* Hero Section */
-.hero {
-  background: #999;
+/* banner Section */
+.banner {
+  background: #5dade2;
   height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 /* Search Section */
@@ -216,22 +218,29 @@ body {
 
 .ride-card {
   background: white;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
 }
 
 .car-icon {
-  font-size: 30px;
+  font-size: 60px;
+  margin-bottom: 20px;
 }
 
 .ride-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #111a20;
+  font-size: 22px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.ride-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #666;
+  margin: 0;
 }
 
 /* About Section */
@@ -252,14 +261,9 @@ body {
 .about-logo {
   width: 250px;
   height: 250px;
-  background: linear-gradient(135deg, #2980b9, #5dade2);
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 120px;
-  color: white;
-  font-weight: bold;
+  object-fit: cover;
+  display: block;
 }
 
 .about-content h3 {
@@ -274,34 +278,6 @@ body {
   color: #ddd;
 }
 
-/* Stats Section */
-.stats-section {
-  background: #5dade2;
-  padding: 40px 50px;
-}
-
-.stats-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-around;
-}
-
-.stat-item {
-  text-align: center;
-  color: white;
-}
-
-.stat-number {
-  font-size: 48px;
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-.stat-label {
-  font-size: 14px;
-}
-
 /* Team Section */
 .team-section {
   background: #5dade2;
@@ -311,6 +287,14 @@ body {
 .team-container {
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.team-title {
+  text-align: center;
+  font-size: 36px;
+  color: white;
+  font-weight: bold;
+  margin-bottom: 40px;
 }
 
 .team-grid {
@@ -327,15 +311,10 @@ body {
 .member-avatar {
   width: 150px;
   height: 150px;
-  background: linear-gradient(135deg, #2980b9, #5dade2);
   border-radius: 50%;
   margin: 0 auto 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 70px;
-  color: white;
-  font-weight: bold;
+  display: block;
+  object-fit: cover;
   border: 10px solid white;
 }
 

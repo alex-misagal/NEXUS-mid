@@ -5,6 +5,36 @@ body {
   display: flex;
   height: 100vh;
   justify-content: flex-end;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Video Background */
+.video-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.video-background video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #111a20 0%, #1a2a35 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 120px;
 }
 
 .container {
@@ -13,6 +43,8 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+  z-index: 2;
 }
 
 .login-box {
@@ -50,6 +82,7 @@ button:hover {
   margin-top: 10px;
   color: red;
 }
+
 /* Modal Styles */
 .modal {
   display: none;
@@ -144,6 +177,7 @@ button:hover {
   margin-top: 10px;
   font-size: 14px;
 }
+
 /* Modal Background */
 .modal {
   display: none;
@@ -189,4 +223,3 @@ button:hover {
   border-radius: 5px;
   border: 1px solid #ccc;
 }
-  

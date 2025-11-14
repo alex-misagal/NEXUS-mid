@@ -29,14 +29,9 @@ body {
 .logo-circle {
   width: 35px;
   height: 35px;
-  background: #0077ff;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 20px;
+  object-fit: cover;
+  display: block;
 }
 
 .brand-name {
