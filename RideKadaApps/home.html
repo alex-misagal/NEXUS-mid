@@ -5,8 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RideKada - Home</title>
   <link rel="stylesheet" href="css/home.css">
+  <style>
+    /* Visual cue for fixed input */
+    .fixed-input {
+      background-color: #f0f0f0 !important;
+      color: #333 !important;
+      font-weight: 500;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 <body>
+
   <!-- Navigation -->
   <nav class="navbar">
     <div class="logo-section">
@@ -14,8 +24,8 @@
       <span class="brand-name">RideKada</span>
     </div>
     <div class="user-section">
-      <button class="publish-btn" onclick="publishRide()">Publish a Ride +</button>
-      <div class="user-icon" onclick="showUserMenu()">👤</div>
+      <button id="publishBtn" class="publish-btn">Publish a Ride +</button>
+      <div id="userIcon" class="user-icon">Profile</div>
     </div>
   </nav>
 
@@ -23,13 +33,46 @@
   <div class="hero"></div>
 
   <!-- Search Section -->
-  <form action="php/driver_search.php" method="POST" class="search-container">
-    <input type="text" class="search-input" name="fromLocation" placeholder="From: Mandaluyong">
-    <input type="text" class="search-input" name="goingTo" placeholder="Going to" required>
-    <input type="date" class="search-input" name="calendar" required>
-    <input type="number" class="search-input" name="passengerCount" placeholder="Passenger Count" min="1" required>
-    <button type="submit" class="search-btn">SEARCH</button>
-  </form>
+  <div class="search-section">
+    <form action="php/driver_search.php" method="POST" class="search-container">
+      
+     
+      <input type="text"
+             class="search-input fixed-input"
+             name="fromLocation"
+             value="Maryheights"
+             readonly
+             title="Origin is fixed to Msryheights">
+
+      <!-- Going To -->
+      <input type="text"
+             id="goingTo"
+             class="search-input"
+             name="goingTo"
+             placeholder="Going to"
+             required>
+
+      <!-- Date (Auto-filled with today) -->
+      <input type="date"
+             id="calendar"
+             class="search-input"
+             name="calendar"
+             required>
+
+      <!-- Passenger Count -->
+      <input type="number"
+             id="passengerCount"
+             class="search-input"
+             name="passengerCount"
+             placeholder="Passenger Count"
+             min="1"
+             max="10"
+             required>
+
+      <!-- Search Button -->
+      <button type="submit" class="search-btn">SEARCH</button>
+    </form>
+  </div>
 
   <!-- Main Content -->
   <div class="main-content">
@@ -48,7 +91,7 @@
     </div>
     <div class="content-right">
       <div class="ride-card">
-        <div class="car-icon">🚗</div>
+        <div class="car-icon">Car</div>
         <div class="ride-title">Lorem ipsum dolor</div>
       </div>
     </div>
@@ -142,6 +185,8 @@
     </div>
   </footer>
 
-<script src="javascript/home.js"></script>
+  
+  <script src="javascript/home.js" defer></script>
+
 </body>
 </html>

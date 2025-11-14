@@ -1,37 +1,81 @@
+document.addEventListener('DOMContentLoaded', () => {
+  const calendarEl = document.getElementById('calendar');
+  if (calendarEl && !calendarEl.value) {
+    calendarEl.valueAsDate = new Date();
+  }
 
-    // Set today's date as default
-    document.getElementById('calendar').valueAsDate = new Date();
-
-    function publishRide() {
-      alert('Publish a ride functionality - coming soon!');
+  // NEW: Disable past dates
+  const calendarInput = document.getElementById('calendar');
+  if (calendarInput) {
+    const today = new Date().toISOString().split('T')[0];
+    calendarInput.setAttribute('min', today);
+    if (!calendarInput.value || calendarInput.value < today) {
+      calendarInput.value = today;
     }
+  }
 
-    function showUserMenu() {
-      const userEmail = 'user@example.com'; // This would come from session storage
-      const menu = confirm(`Logged in as: ${userEmail}\n\nClick OK to logout`);
-      if (menu) {
-        alert('Logged out successfully!');
-        // In actual implementation: window.location.href = 'index.html';
+  const publishBtn = document.getElementById('publishBtn');
+  if (publishBtn) {
+    publishBtn.addEventListener('click', publishRide);
+  }
+
+  const userIcon = document.getElementById('userIcon');
+  if (userIcon) {
+    userIcon.addEventListener('click', showUserMenu);
+  }
+
+  const searchForm = document.querySelector('.search-container');
+  if (searchForm) {
+    searchForm.addEventListener('submit', (e) => {
+      if (!searchRides()) {
+        e.preventDefault();
       }
+    });
+  }
+});
+
+function publishRide() {
+  alert('Publish a ride functionality - coming soon!');
+}
+
+function showUserMenu() {
+  const user = getStoredUser();
+  if (!user) {
+    if (confirm('You are not logged in. Go to the login page?')) {
+      window.location.href = 'index.html';
     }
+    return;
+  }
+  const message = `Logged in as: ${user.Fname} ${user.Lname}\n(${user.Email})\n\nClick OK to logout`;
+  if (confirm(message)) {
+    sessionStorage.removeItem('user');
+    alert('Logged out successfully!');
+    window.location.href = 'index.html';
+  }
+}
 
-    function searchRides() {
-      const fromLocation = document.getElementById('fromLocation').value;
-      const goingTo = document.getElementById('goingTo').value;
-      const calendar = document.getElementById('calendar').value;
-      const passengerCount = document.getElementById('passengerCount').value;
+function getStoredUser() {
+  try {
+    const data = sessionStorage.getItem('user');
+    return data ? JSON.parse(data) : null;
+  } catch (e) {
+    console.error('Failed to parse user from sessionStorage', e);
+    return null;
+  }
+}
 
-      if (!goingTo || !passengerCount) {
-        alert('Please fill in destination and passenger count');
-        return;
-      }
-
-      console.log('Searching rides:', {
-        from: fromLocation,
-        to: goingTo,
-        date: calendar,
-        passengers: passengerCount
-      });
-
-      alert(`Searching for rides from ${fromLocation} to ${goingTo} on ${calendar} for ${passengerCount} passenger(s)`);
-    }
+function searchRides() {
+  const goingTo = document.getElementById('goingTo')?.value.trim() || '';
+  const passengerCount = document.getElementById('passengerCount')?.value.trim() || '';
+  if (!goingTo || !passengerCount) {
+    alert('Please fill in destination and passenger count');
+    return false;
+  }
+  console.log('Searching rides:', {
+    from: 'Msryheights',
+    to: goingTo,
+    date: document.getElementById('calendar')?.value,
+    passengers: passengerCount
+  });
+  return true;
+}
