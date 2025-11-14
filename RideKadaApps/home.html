@@ -409,15 +409,13 @@
   <div class="hero"></div>
 
   <!-- Search Section -->
-  <div class="search-section">
-    <div class="search-container">
-      <input type="text" class="search-input" id="fromLocation" placeholder="From: Mandaluyong">
-      <input type="text" class="search-input" id="goingTo" placeholder="Going to">
-      <input type="date" class="search-input" id="calendar">
-      <input type="number" class="search-input" id="passengerCount" placeholder="Passenger Count" min="1">
-      <button class="search-btn" onclick="searchRides()">SEARCH</button>
-    </div>
-  </div>
+  <form action="php/driver_search.php" method="POST" class="search-container">
+    <input type="text" class="search-input" name="fromLocation" placeholder="From: Mandaluyong">
+    <input type="text" class="search-input" name="goingTo" placeholder="Going to" required>
+    <input type="date" class="search-input" name="calendar" required>
+    <input type="number" class="search-input" name="passengerCount" placeholder="Passenger Count" min="1" required>
+    <button type="submit" class="search-btn">SEARCH</button>
+  </form>
 
   <!-- Main Content -->
   <div class="main-content">
