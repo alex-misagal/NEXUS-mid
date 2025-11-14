@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
     calendarEl.valueAsDate = new Date();
   }
 
-  // NEW: Disable past dates
   const calendarInput = document.getElementById('calendar');
   if (calendarInput) {
     const today = new Date().toISOString().split('T')[0];
