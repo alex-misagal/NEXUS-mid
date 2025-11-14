@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RideKada - Profile</title>
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="css/profile.css">
+</head>
+<body>
+
+  <!-- Navigation (Same as home.html) -->
+  <nav class="navbar">
+    <div class="logo-section">
+      <div class="logo-circle">R</div>
+      <span class="brand-name">RideKada</span>
+    </div>
+    <div class="user-section">
+      <button id="publishBtn" class="publish-btn">Publish a Ride +</button>
+
+      <!-- PROFILE DROPDOWN -->
+      <div class="profile-wrapper">
+        <div id="userIcon" class="user-icon">Profile</div>
+        <div id="profileDropdown" class="profile-dropdown">
+          <a href="profile.html" class="dropdown-item">View Profile</a>
+          <a href="#" id="logoutLink" class="dropdown-item">Logout</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Profile Section -->
+  <div class="profile-container">
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="profile-avatar" id="avatarInitial">U</div>
+        <h2 class="profile-name" id="userName">Loading...</h2>
+        <p class="profile-email" id="userEmail">Loading...</p>
+      </div>
+
+      <div class="profile-body">
+        <div class="info-group">
+          <label>Full Name</label>
+          <p id="fullName">—</p>
+        </div>
+
+        <div class="info-group">
+          <label>Email Address</label>
+          <p id="email">—</p>
+        </div>
+
+        <div class="info-group">
+          <label>Phone Number</label>
+          <p id="phone">—</p>
+        </div>
+
+        <div class="info-group">
+          <label>Address</label>
+          <p id="address">—</p>
+        </div>
+
+        <div class="info-group">
+          <label>Member Since</label>
+          <p id="memberSince">—</p>
+        </div>
+
+        <!-- Inside .btn-group -->
+        <div class="btn-group">
+            <button class="btn-primary" id="editProfileBtn">Edit Profile</button>
+            <button class="btn-danger" id="deleteAccountBtn">Delete Account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- EDIT PROFILE MODAL -->
+<div id="editModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeEditModal()">&times;</span>
+    <h2>Edit Profile</h2>
+    <form id="editForm">
+      <input type="text" id="editFname" placeholder="First Name" required>
+      <input type="text" id="editLname" placeholder="Last Name" required>
+      <input type="email" id="editEmail" placeholder="Email" required>
+      <input type="text" id="editPhone" placeholder="Phone Number" required>
+      <input type="text" id="editAddress" placeholder="Address (e.g., Maryheights)">
+      <div style="margin-top:15px; text-align:right;">
+        <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn-submit">Save Changes</button>
+      </div>
+    </form>
+    <p id="editMessage" style="margin-top:10px; font-size:14px;"></p>
+  </div>
+</div>
+  <!-- Scripts -->
+  <script src="javascript/home.js" defer></script>
+  <script src="javascript/profile.js" defer></script>
+</body>
+</html>

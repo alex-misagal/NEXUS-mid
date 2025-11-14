@@ -2,7 +2,7 @@
 header('Content-Type: application/json');
 include 'connect.php';
 
-$sql = "SELECT UserID, Fname, Lname, Email, PhoneNumber FROM user";
+$sql = "SELECT UserID, Fname, Lname, Email, PhoneNumber, Address FROM user";
 $result = $conn->query($sql);
 
 $users = [];
@@ -23,3 +23,4 @@ if ($result && $result->num_rows > 0) {
 }
 
 $conn->close();
+?>

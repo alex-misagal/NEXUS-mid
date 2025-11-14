@@ -3,7 +3,7 @@
 $servername = "localhost";
 $username = "root";
 $password = "";
-$database = "nexus-mid"; 
+$database = "nexus-mid"; // change if your database name differs
 
 $conn = new mysqli($servername, $username, $password, $database);
 

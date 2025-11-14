@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     calendarEl.valueAsDate = new Date();
   }
 
+  // Disable past dates
   const calendarInput = document.getElementById('calendar');
   if (calendarInput) {
     const today = new Date().toISOString().split('T')[0];
@@ -19,9 +20,26 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const userIcon = document.getElementById('userIcon');
-  if (userIcon) {
-    userIcon.addEventListener('click', showUserMenu);
+  const dropdown = document.getElementById('profileDropdown');
+  const logoutLink = document.getElementById('logoutLink');
+
+  if (userIcon && dropdown) {
+    userIcon.addEventListener('click', toggleDropdown);
   }
+
+  if (logoutLink) {
+    logoutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleLogout();
+    });
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!userIcon.contains(e.target) && !dropdown.contains(e.target)) {
+      dropdown.classList.remove('show');
+    }
+  });
 
   const searchForm = document.querySelector('.search-container');
   if (searchForm) {
@@ -33,24 +51,29 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-function publishRide() {
-  alert('Publish a ride functionality - coming soon!');
+function toggleDropdown(e) {
+  e.stopPropagation();
+  const dropdown = document.getElementById('profileDropdown');
+  dropdown.classList.toggle('show');
 }
 
-function showUserMenu() {
+function handleLogout() {
   const user = getStoredUser();
-  if (!user) {
-    if (confirm('You are not logged in. Go to the login page?')) {
+  if (user) {
+    if (confirm(`Logout ${user.Fname} ${user.Lname}?`)) {
+      sessionStorage.removeItem('user');
+      alert('Logged out successfully!');
       window.location.href = 'index.html';
     }
-    return;
+  } else {
+    if (confirm('You are not logged in. Go to login?')) {
+      window.location.href = 'index.html';
+    }
   }
-  const message = `Logged in as: ${user.Fname} ${user.Lname}\n(${user.Email})\n\nClick OK to logout`;
-  if (confirm(message)) {
-    sessionStorage.removeItem('user');
-    alert('Logged out successfully!');
-    window.location.href = 'index.html';
-  }
+}
+
+function publishRide() {
+  alert('Publish a ride functionality - coming soon!');
 }
 
 function getStoredUser() {
@@ -71,7 +94,7 @@ function searchRides() {
     return false;
   }
   console.log('Searching rides:', {
-    from: 'Msryheights',
+    from: 'Maryheights',
     to: goingTo,
     date: document.getElementById('calendar')?.value,
     passengers: passengerCount

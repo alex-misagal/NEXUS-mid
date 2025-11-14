@@ -25,7 +25,16 @@
     </div>
     <div class="user-section">
       <button id="publishBtn" class="publish-btn">Publish a Ride +</button>
-      <div id="userIcon" class="user-icon">Profile</div>
+
+      <!-- PROFILE BUTTON + DROPDOWN -->
+      <div class="profile-wrapper">
+        <div id="userIcon" class="user-icon">Profile</div>
+
+        <div id="profileDropdown" class="profile-dropdown">
+          <a href="profile.html" class="dropdown-item">View Profile</a>
+          <a href="#" id="logoutLink" class="dropdown-item">Logout</a>
+        </div>
+      </div>
     </div>
   </nav>
 
@@ -36,13 +45,12 @@
   <div class="search-section">
     <form action="php/driver_search.php" method="POST" class="search-container">
       
-     
       <input type="text"
              class="search-input fixed-input"
              name="fromLocation"
              value="Maryheights"
              readonly
-             title="Origin is fixed to Msryheights">
+             title="Origin is fixed to Maryheights">
 
       <!-- Going To -->
       <input type="text"
@@ -185,8 +193,6 @@
     </div>
   </footer>
 
-  
   <script src="javascript/home.js" defer></script>
-
 </body>
 </html>
