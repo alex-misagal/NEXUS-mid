@@ -143,7 +143,7 @@ async function login() {
       message.textContent = `Welcome, ${data.user.Fname}! Redirecting...`;
 
       setTimeout(() => {
-        window.location.href = 'html/home.html';  // Redirect after successful login
+        window.location.href = 'home.html';  // Redirect after successful login
       }, 1500);
     } else {
       message.style.color = 'red';
