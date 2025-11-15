@@ -45,7 +45,7 @@ function confirmBooking() {
   const driver = driversData.find(d => d.DriverID == selectedDriver);
   if (!driver) return;
 
-  // Calculate a sample fare (you can customize this logic)
+  // Calculate a sample fare
   const baseFare = 50;
   const farePerPassenger = 17;
   const totalFare = baseFare + (searchParams.passengers * farePerPassenger);

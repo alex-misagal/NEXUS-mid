@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const textResponse = await res.text(); // Get raw response
-        console.log("Raw response:", textResponse); // ← OPEN DEV TOOLS (F12)
+        console.log("Raw response:", textResponse); 
 
         let data;
         try {

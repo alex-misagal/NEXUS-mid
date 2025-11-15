@@ -187,7 +187,7 @@ async function confirmPayment() {
     } catch (error) {
       console.error('Payment error:', error);
       // For demo purposes, show success anyway
-      // In production, you should handle this error properly
+      
       document.getElementById('successModal').style.display = 'flex';
     }
   }, 1500);
