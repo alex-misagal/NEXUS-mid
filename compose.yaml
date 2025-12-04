@@ -5,7 +5,7 @@ services:
   mysql:
     image: mysql:8.0
     container_name: ridekada-mysql
-    restart: always
+    restart: always  # ← AUTO-RESTART ON SYSTEM REBOOT
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: nexus-mid
@@ -31,7 +31,7 @@ services:
       context: .
       dockerfile: Dockerfile.apache
     container_name: ridekada-web
-    restart: always
+    restart: always  # ← AUTO-RESTART ON SYSTEM REBOOT
     ports:
       - "8080:80"
     volumes:
@@ -48,11 +48,36 @@ services:
       - DB_PASSWORD=ridekada_pass
       - DB_NAME=nexus-mid
 
-  # PHPMyAdmin for database management (optional but helpful)
+  # Node.js API Service
+  nodejs-api:
+    build:
+      context: ./nodejs-api
+      dockerfile: Dockerfile.nodejs
+    container_name: ridekada-nodejs-api
+    restart: always  # ← AUTO-RESTART ON SYSTEM REBOOT
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - ridekada-network
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=ridekada_user
+      - DB_PASSWORD=ridekada_pass
+      - DB_NAME=nexus-mid
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PHPMyAdmin for database management
   phpmyadmin:
     image: phpmyadmin:latest
     container_name: ridekada-phpmyadmin
-    restart: always
+    restart: always  # ← AUTO-RESTART ON SYSTEM REBOOT
     ports:
       - "8081:80"
     environment:
