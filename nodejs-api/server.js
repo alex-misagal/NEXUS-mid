@@ -12,6 +12,9 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from public directory
+app.use(express.static('public'));
+
 // Database configuration
 const dbConfig = {
   host: process.env.DB_HOST || 'mysql',
@@ -295,19 +298,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Root endpoint
+// Root endpoint - serve dashboard HTML
 app.get('/', (req, res) => {
-  res.json({
-    message: 'RideKada Node.js API Server',
-    version: '1.0.0',
-    endpoints: {
-      users: '/api/users',
-      drivers: '/api/drivers',
-      vehicles: '/api/vehicles',
-      bookings: '/api/bookings',
-      search: '/api/drivers/search/:destination'
-    }
-  });
+  res.sendFile(__dirname + '/public/index.html');
 });
 
 // 404 handler
