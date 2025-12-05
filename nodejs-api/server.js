@@ -4,6 +4,7 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const PORT = 3000;
@@ -13,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 // Serve static files from public directory
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Database configuration
 const dbConfig = {
@@ -42,7 +43,16 @@ async function initializeDatabase() {
   }
 }
 
-// ===== READ ENDPOINTS =====
+// ===== API ENDPOINTS =====
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    service: 'RideKada Node.js API',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // 1. GET all users
 app.get('/api/users', async (req, res) => {
@@ -172,57 +182,7 @@ app.get('/api/drivers/:id', async (req, res) => {
   }
 });
 
-// 5. GET all vehicles
-app.get('/api/vehicles', async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      'SELECT VehicleID, PlateNumber, Model, Color, Capacity FROM vehicle'
-    );
-    res.json({
-      success: true,
-      count: rows.length,
-      data: rows
-    });
-  } catch (error) {
-    console.error('Error fetching vehicles:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch vehicles',
-      error: error.message
-    });
-  }
-});
-
-// 6. GET vehicle by ID
-app.get('/api/vehicles/:id', async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      'SELECT VehicleID, PlateNumber, Model, Color, Capacity FROM vehicle WHERE VehicleID = ?',
-      [req.params.id]
-    );
-    
-    if (rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Vehicle not found'
-      });
-    }
-    
-    res.json({
-      success: true,
-      data: rows[0]
-    });
-  } catch (error) {
-    console.error('Error fetching vehicle:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch vehicle',
-      error: error.message
-    });
-  }
-});
-
-// 7. SEARCH drivers by destination
+// 5. SEARCH drivers by destination (MUST be before /api/drivers/:id)
 app.get('/api/drivers/search/:destination', async (req, res) => {
   try {
     const searchTerm = `%${req.params.destination}%`;
@@ -253,6 +213,56 @@ app.get('/api/drivers/search/:destination', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to search drivers',
+      error: error.message
+    });
+  }
+});
+
+// 6. GET all vehicles
+app.get('/api/vehicles', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT VehicleID, PlateNumber, Model, Color, Capacity FROM vehicle'
+    );
+    res.json({
+      success: true,
+      count: rows.length,
+      data: rows
+    });
+  } catch (error) {
+    console.error('Error fetching vehicles:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch vehicles',
+      error: error.message
+    });
+  }
+});
+
+// 7. GET vehicle by ID
+app.get('/api/vehicles/:id', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT VehicleID, PlateNumber, Model, Color, Capacity FROM vehicle WHERE VehicleID = ?',
+      [req.params.id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vehicle not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: rows[0]
+    });
+  } catch (error) {
+    console.error('Error fetching vehicle:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch vehicle',
       error: error.message
     });
   }
@@ -289,21 +299,12 @@ app.get('/api/bookings', async (req, res) => {
   }
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    service: 'RideKada Node.js API',
-    timestamp: new Date().toISOString()
-  });
-});
-
 // Root endpoint - serve dashboard HTML
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// 404 handler
+// 404 handler (MUST BE LAST!)
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -311,7 +312,7 @@ app.use((req, res) => {
   });
 });
 
-// Error handler
+// Error handler (MUST BE LAST!)
 app.use((error, req, res, next) => {
   console.error('Server error:', error);
   res.status(500).json({
