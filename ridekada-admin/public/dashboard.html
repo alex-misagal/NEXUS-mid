@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RideKada Admin Dashboard</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-circle">🚗</div>
+      <span class="app-name">RideKada</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">📊</span>
+        <span class="nav-text">Dashboard</span>
+      </a>
+      
+      <div class="nav-section">
+        <a href="#" class="nav-item" data-page="manage-users">
+          <span class="nav-icon">👥</span>
+          <span class="nav-text">Manage Users</span>
+        </a>
+        <div class="nav-submenu">
+          <a href="#" class="nav-subitem" data-page="full-list">Full List</a>
+          <a href="#" class="nav-subitem" data-page="new-users">New Users</a>
+          <a href="#" class="nav-subitem" data-page="user-status">User Status</a>
+          <a href="#" class="nav-subitem" data-page="update-user">Update User Details</a>
+        </div>
+      </div>
+
+      <a href="#" class="nav-item" data-page="reports">
+        <span class="nav-icon">📋</span>
+        <span class="nav-text">Reports</span>
+      </a>
+
+      <a href="#" class="nav-item" id="logoutBtn">
+        <span class="nav-icon">🚪</span>
+        <span class="nav-text">Logout</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="breadcrumb">
+        <span class="home-icon">🏠</span>
+        <span id="breadcrumbText">Home</span>
+      </div>
+      <button class="btn-logout" id="logoutBtnTop">Logout</button>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+      <!-- Dashboard View -->
+      <div id="dashboardView" class="view active">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card red">
+            <div class="stat-icon">👤</div>
+            <div class="stat-number" id="activeDrivers">0</div>
+            <div class="stat-label">Active Drivers</div>
+          </div>
+
+          <div class="stat-card purple">
+            <div class="stat-icon">👥</div>
+            <div class="stat-number" id="registeredPassengers">0</div>
+            <div class="stat-label">Registered Passengers</div>
+          </div>
+
+          <div class="stat-card green">
+            <div class="stat-icon">💵</div>
+            <div class="stat-number" id="totalEarnings">₱0</div>
+            <div class="stat-label">Total Earnings</div>
+          </div>
+
+          <div class="stat-card blue">
+            <div class="stat-icon">📢</div>
+            <div class="stat-number" id="announcements">0</div>
+            <div class="stat-label">Announcements</div>
+          </div>
+
+          <div class="stat-card orange">
+            <div class="stat-icon">👨‍👩‍👧‍👦</div>
+            <div class="stat-number" id="totalUsers">0</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+
+          <div class="stat-card gray">
+            <div class="stat-icon">🚗</div>
+            <div class="stat-number" id="availableRides">0</div>
+            <div class="stat-label">Available Rides</div>
+          </div>
+
+          <div class="stat-card violet">
+            <div class="stat-icon">💸</div>
+            <div class="stat-number" id="totalExpenses">₱0</div>
+            <div class="stat-label">Total Expenses</div>
+          </div>
+        </div>
+
+        <!-- Logs & Announcements -->
+        <div class="logs-announcements">
+          <div class="logs-panel">
+            <h3>📋 Logs & Announcements</h3>
+            
+            <div class="log-section">
+              <h4>New Driver!</h4>
+              <div id="newDriverLogs" class="log-items"></div>
+            </div>
+
+            <div class="log-section">
+              <h4>New Passenger!</h4>
+              <div id="newPassengerLogs" class="log-items"></div>
+            </div>
+          </div>
+
+          <div class="announcement-panel">
+            <h3>📢 Make an Announcement</h3>
+            <textarea 
+              id="announcementText" 
+              placeholder="Type your announcement here..."
+              rows="10"
+            ></textarea>
+            <button class="btn-publish" id="publishBtn">Publish</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manage Users - Full List View -->
+      <div id="fullListView" class="view">
+        <div class="page-header">
+          <h2>Users List</h2>
+          <input type="text" id="searchUsers" class="search-input" placeholder="Search...">
+        </div>
+
+        <div class="filter-buttons">
+          <button class="filter-btn active" data-type="all">All</button>
+          <button class="filter-btn" data-type="driver">Driver</button>
+          <button class="filter-btn" data-type="passenger">Passenger</button>
+          <button class="filter-btn" data-type="admin">Admin</button>
+          <button class="sort-btn">⬍</button>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>User Type</th>
+                <th>Phone No.</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- New Users View -->
+      <div id="newUsersView" class="view">
+        <div class="page-header">
+          <h2>Pending Drivers</h2>
+        </div>
+
+        <div class="section-card">
+          <h3>📋 List of Pending Users</h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>User Type</th>
+                <th>D.O.R</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="pendingUsersTableBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- User Status View -->
+      <div id="userStatusView" class="view">
+        <div class="page-header">
+          <h2>User Status</h2>
+        </div>
+
+        <div class="section-card">
+          <h3>📋 List of Users</h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>User Type</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="statusTableBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Reports View -->
+      <div id="reportsView" class="view">
+        <div class="page-header">
+          <h2>Registered User Report</h2>
+          <input type="text" id="searchReports" class="search-input" placeholder="Search...">
+        </div>
+
+        <h3 style="margin: 20px 0;">📋 Reports List</h3>
+
+        <div class="filter-buttons">
+          <button class="filter-btn active" data-type="all">All</button>
+          <button class="filter-btn" data-type="driver">Driver</button>
+          <button class="filter-btn" data-type="passenger">Passenger</button>
+          <button class="sort-btn">Sort</button>
+        </div>
+
+        <div class="reports-grid" id="reportsGrid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Detail Modal -->
+  <div id="userModal" class="modal">
+    <div class="modal-content large">
+      <button class="modal-close" onclick="closeUserModal()">×</button>
+      <div class="modal-body" id="userModalContent">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeEditModal()">×</button>
+      <h2>Edit User</h2>
+      <form id="editUserForm">
+        <div id="editFormContent">
+          <!-- Populated by JS -->
+        </div>
+        <div class="modal-buttons">
+          <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn-save">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Pending User Detail Modal -->
+  <div id="pendingUserModal" class="modal">
+    <div class="modal-content large">
+      <button class="modal-close" onclick="closePendingModal()">×</button>
+      <div class="modal-body" id="pendingUserContent">
+        <!-- Populated by JS -->
+      </div>
+      <div class="modal-buttons">
+        <button class="btn-decline" id="declineBtn">Decline</button>
+        <button class="btn-accept" id="acceptBtn">Accept</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

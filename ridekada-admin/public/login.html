@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RideKada Admin - Login</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="login-page">
+  <div class="login-container">
+    <div class="login-box">
+      <div class="admin-logo">
+        <div class="logo-icon">🚗</div>
+        <h1>RideKada Admin</h1>
+        <p>Management Portal</p>
+      </div>
+
+      <form id="loginForm" class="login-form">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            placeholder="Enter username" 
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            placeholder="Enter password" 
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn-login">
+          Login
+        </button>
+
+        <div id="loginMessage" class="message"></div>
+      </form>
+
+      <div class="login-footer">
+        <p>Default: <strong>admin / admin123</strong></p>
+        <p>Team NEXUS - SLU IT/CS 311</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/login.js"></script>
+</body>
+</html>
