@@ -35,13 +35,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Database configuration
 const dbConfig = {
-  host: process.env.DB_HOST || 'mysql',
-  user: process.env.DB_USER || 'ridekada_user',
-  password: process.env.DB_PASSWORD || 'ridekada_pass',
-  database: process.env.DB_NAME || 'nexus-mid',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  host: 'localhost',           // ← Changed from 'mysql' to 'localhost'
+  user: 'root',                // ← Your WAMP MySQL username (usually 'root')
+  password: '',                // ← Your WAMP MySQL password (usually empty)
+  database: 'nexus-mid',       // ← Your database name
+  port: 3306
 };
 
 let pool;
