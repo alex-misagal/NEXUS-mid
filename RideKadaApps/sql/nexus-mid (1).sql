@@ -334,3 +334,41 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+-- Create published_rides table for driver ride publishing
+
+
+CREATE TABLE IF NOT EXISTS `published_rides` (
+  `PublishedRideID` INT PRIMARY KEY AUTO_INCREMENT,
+  `DriverID` INT NOT NULL,
+  `FromLocation` VARCHAR(255) NOT NULL DEFAULT 'Maryheights',
+  `Destination` VARCHAR(255) NOT NULL,
+  `RideDate` DATE NOT NULL,
+  `RideTime` TIME NOT NULL,
+  `AvailableSeats` INT NOT NULL,
+  `PricePerSeat` DECIMAL(10,2) NOT NULL,
+  `Status` ENUM('Available', 'Full', 'Completed', 'Cancelled') DEFAULT 'Available',
+  `Notes` TEXT,
+  `CreatedAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `UpdatedAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`DriverID`) REFERENCES `driver`(`DriverID`) ON DELETE CASCADE,
+  INDEX `idx_date` (`RideDate`),
+  INDEX `idx_destination` (`Destination`),
+  INDEX `idx_status` (`Status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Create bookings table for passenger ride bookings
+CREATE TABLE IF NOT EXISTS `ride_bookings` (
+  `BookingID` INT PRIMARY KEY AUTO_INCREMENT,
+  `PublishedRideID` INT NOT NULL,
+  `UserID` INT NOT NULL,
+  `SeatsBooked` INT NOT NULL,
+  `TotalFare` DECIMAL(10,2) NOT NULL,
+  `BookingStatus` ENUM('Pending', 'Confirmed', 'Cancelled', 'Completed') DEFAULT 'Pending',
+  `PaymentStatus` ENUM('Unpaid', 'Paid') DEFAULT 'Unpaid',
+  `BookingDate` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`PublishedRideID`) REFERENCES `published_rides`(`PublishedRideID`) ON DELETE CASCADE,
+  FOREIGN KEY (`UserID`) REFERENCES `user`(`UserID`) ON DELETE CASCADE,
+  INDEX `idx_user` (`UserID`),
+  INDEX `idx_ride` (`PublishedRideID`),
+  INDEX `idx_status` (`BookingStatus`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

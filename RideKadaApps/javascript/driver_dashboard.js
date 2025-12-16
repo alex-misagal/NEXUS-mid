@@ -641,3 +641,46 @@ function handleLogout() {
     window.location.href = 'index.html';
   }
 }
+async function handlePublishRide(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(e.target);
+  const data = {
+    driverId: currentDriver.DriverID,
+    destination: formData.get('destination'),
+    rideDate: formData.get('rideDate'),
+    rideTime: formData.get('rideTime'),
+    availableSeats: parseInt(formData.get('availableSeats')),
+    pricePerSeat: parseFloat(formData.get('fare')),
+    notes: formData.get('notes') || ''
+  };
+  
+  try {
+    const response = await fetch('php/publish_ride.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert('Ride published successfully!');
+      e.target.reset();
+      
+      // Set date to today
+      const dateInput = e.target.querySelector('[name="rideDate"]');
+      dateInput.value = new Date().toISOString().split('T')[0];
+      
+      switchView('rides');
+      loadDashboardStats();
+    } else {
+      alert('Failed to publish ride: ' + result.message);
+    }
+  } catch (error) {
+    console.error('Error publishing ride:', error);
+    alert('Failed to publish ride. Please check console for details.');
+  }
+}

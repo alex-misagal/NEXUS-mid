@@ -10,8 +10,14 @@ if (!$to || !$date || $passengers < 1) {
     die("<h2 style='text-align:center;color:red;'>Invalid search parameters.</h2>");
 }
 
-// JOIN driver + vehicle to get Capacity
+// Get published rides that match the search criteria
 $sql = "SELECT 
+            pr.PublishedRideID,
+            pr.RideDate,
+            pr.RideTime,
+            pr.AvailableSeats,
+            pr.PricePerSeat,
+            pr.Notes,
             d.DriverID, 
             d.Fname, 
             d.Lname, 
@@ -22,24 +28,24 @@ $sql = "SELECT
             v.PlateNumber,
             v.Model,
             v.Color
-        FROM driver d 
+        FROM published_rides pr
+        JOIN driver d ON pr.DriverID = d.DriverID
         JOIN vehicle v ON d.VehicleID = v.VehicleID 
-        WHERE 1=1";
+        WHERE pr.Status = 'Available'
+        AND d.Status = 'Active'
+        AND pr.RideDate = ?
+        AND pr.AvailableSeats >= ?";
 
-$params = [];
-$types = "";
+$params = [$date, $passengers];
+$types = "si";
 
 if ($to) {
-    $sql .= " AND d.Destination LIKE ?";
+    $sql .= " AND pr.Destination LIKE ?";
     $params[] = "%$to%";
     $types .= "s";
 }
 
-if ($passengers > 0) {
-    $sql .= " AND v.Capacity >= ?";
-    $params[] = $passengers;
-    $types .= "i";
-}
+$sql .= " ORDER BY pr.RideTime ASC";
 
 $stmt = $conn->prepare($sql);
 if (!empty($params)) {
@@ -101,14 +107,17 @@ while ($row = $result->fetch_assoc()) {
         </div>
       <?php else: ?>
         <div class="results-header">
-          <h3>Available Drivers</h3>
-          <span class="results-count"><?php echo count($drivers); ?> driver(s) found</span>
+          <h3>Available Rides</h3>
+          <span class="results-count"><?php echo count($drivers); ?> ride(s) found</span>
         </div>
 
         <!-- Driver Cards Grid -->
         <div class="drivers-grid">
           <?php foreach ($drivers as $d): ?>
-            <div class="driver-card" onclick="selectDriverCard(this, '<?php echo $d['DriverID']; ?>')">
+            <?php 
+              $totalFare = $d['PricePerSeat'] * $passengers;
+            ?>
+            <div class="driver-card" onclick="selectDriverCard(this, '<?php echo $d['PublishedRideID']; ?>')">
               <!-- Card Header with Avatar -->
               <div class="driver-card-header">
                 <div class="driver-avatar-large">
@@ -116,7 +125,7 @@ while ($row = $result->fetch_assoc()) {
                 </div>
                 <div class="driver-name-card"><?php echo htmlspecialchars($d['Fname'] . ' ' . $d['Lname']); ?></div>
                 <div class="driver-rating">
-                  <span>⭐</span> 4.8 • 127 trips
+                  <span>⭐</span> 4.8 • <?php echo $d['AvailableSeats']; ?> seats available
                 </div>
               </div>
 
@@ -131,6 +140,16 @@ while ($row = $result->fetch_assoc()) {
                   </div>
                 </div>
 
+                <!-- Date & Time -->
+                <div class="info-row">
+                  <div class="info-icon">📅</div>
+                  <div class="info-content">
+                    <div class="info-label">Date & Time</div>
+                    <div class="info-value"><?php echo date('M d, Y', strtotime($d['RideDate'])); ?></div>
+                    <div class="vehicle-details"><?php echo date('g:i A', strtotime($d['RideTime'])); ?></div>
+                  </div>
+                </div>
+
                 <!-- Vehicle -->
                 <div class="info-row">
                   <div class="info-icon">🚗</div>
@@ -141,14 +160,13 @@ while ($row = $result->fetch_assoc()) {
                   </div>
                 </div>
 
-                <!-- Available Seats -->
+                <!-- Price -->
                 <div class="info-row">
-                  <div class="info-icon">👥</div>
+                  <div class="info-icon">💰</div>
                   <div class="info-content">
-                    <div class="info-label">Available Seats</div>
-                    <div class="info-value">
-                      <span class="capacity-badge"><?php echo $d['Capacity']; ?> seats available</span>
-                    </div>
+                    <div class="info-label">Price</div>
+                    <div class="info-value">₱<?php echo number_format($d['PricePerSeat'], 2); ?> per seat</div>
+                    <div class="vehicle-details">Total: ₱<?php echo number_format($totalFare, 2); ?></div>
                   </div>
                 </div>
 
@@ -160,12 +178,23 @@ while ($row = $result->fetch_assoc()) {
                     <div class="info-value"><?php echo htmlspecialchars($d['PhoneNumber']); ?></div>
                   </div>
                 </div>
+
+                <?php if ($d['Notes']): ?>
+                <!-- Notes -->
+                <div class="info-row">
+                  <div class="info-icon">📝</div>
+                  <div class="info-content">
+                    <div class="info-label">Notes</div>
+                    <div class="info-value" style="font-size: 13px;"><?php echo htmlspecialchars($d['Notes']); ?></div>
+                  </div>
+                </div>
+                <?php endif; ?>
               </div>
 
               <!-- Card Footer with Select Button -->
               <div class="driver-card-footer">
-                <button class="select-driver-btn" onclick="event.stopPropagation(); selectDriverCard(this.parentElement.parentElement, '<?php echo $d['DriverID']; ?>')">
-                  Select This Driver
+                <button class="select-driver-btn" onclick="event.stopPropagation(); selectDriverCard(this.parentElement.parentElement, '<?php echo $d['PublishedRideID']; ?>')">
+                  Select This Ride
                 </button>
               </div>
             </div>
@@ -209,6 +238,11 @@ while ($row = $result->fetch_assoc()) {
             <label>Date</label>
             <input type="text" id="modal-date" readonly>
           </div>
+
+          <div class="modal-field">
+            <label>Time</label>
+            <input type="text" id="modal-time" readonly>
+          </div>
           
           <div class="modal-field">
             <label>No. of Passengers</label>
@@ -218,7 +252,12 @@ while ($row = $result->fetch_assoc()) {
           <h3 class="modal-section-title" style="margin-top:30px;">Payment</h3>
           
           <div class="modal-field">
-            <label>Estimated Fare</label>
+            <label>Price per Seat</label>
+            <input type="text" id="modal-price-per-seat" readonly>
+          </div>
+
+          <div class="modal-field">
+            <label>Total Fare</label>
             <input type="text" id="modal-fare" readonly>
           </div>
           

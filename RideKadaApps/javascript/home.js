@@ -99,5 +99,5 @@ function searchRides() {
     date: document.getElementById('calendar')?.value,
     passengers: passengerCount
   });
-  return true;
+  return true; // Allow form submission to driver_search.php
 }
