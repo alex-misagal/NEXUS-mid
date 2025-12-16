@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RideKada</title>
+  <link rel="stylesheet" href="css/sign_in.css">
+</head>
+<body>
+
+  <!-- Video Background -->
+  <div class="video-background">
+    <video autoplay muted loop playsinline>
+      <source src="media/mirror.mp4" type="video/mp4">
+      <div class="video-placeholder">🎥</div>
+    </video>
+  </div>
+
+  <div class="container">
+    <div class="login-box">
+      <img src="media/logo.png" class="logo" alt="RideKada Logo">
+      <h1>RideKada</h1>
+
+      <input type="text" id="email" placeholder="Email">
+      <input type="password" id="password" placeholder="Password">
+
+      <div class="buttons">
+        <button onclick="openSignup()">Sign up</button>
+        <button onclick="login()">Sign in</button>
+      </div>
+      <p id="message"></p>
+      
+      <button onclick="window.location.href='driver_registration.html'" style="margin-top: 10px;">Register as a Driver</button>
+    </div>
+  </div>
+
+
+<!-- 🪟 Signup Popup -->
+<div id="signupModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeSignup()">&times;</span>
+    <h2>Create an Account</h2>
+    <input type="text" id="signupFname" placeholder="First Name">
+    <input type="text" id="signupLname" placeholder="Last Name">
+    <input type="email" id="signupEmail" placeholder="Email">
+    <input type="password" id="signupPassword" placeholder="Password">
+    <input type="text" id="signupPhone" placeholder="Phone Number">
+    <button onclick="submitSignup()">Register</button>
+    <p id="signupMessage"></p>
+  </div>
+</div>
+
+  <script src="javascript/script.js"></script>
+</body>
+</html>
