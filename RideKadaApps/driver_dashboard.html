@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RideKada - Driver Dashboard</title>
+  <link rel="stylesheet" href="css/driver_dashboard.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="logo-section">
+      <img src="media/logo.png" alt="RideKada Logo" class="logo-circle">
+      <span class="brand-name">RideKada</span>
+    </div>
+
+    <div class="user-section">
+      <div class="notification-icon" id="notificationBtn">
+        🔔
+        <span class="notification-badge" id="notificationCount" style="display:none;">0</span>
+      </div>
+      <div class="profile-wrapper">
+        <div id="userIcon" class="user-icon">👤</div>
+        <div id="profileDropdown" class="profile-dropdown">
+          <a href="profile.html" class="dropdown-item">View Profile</a>
+          <a href="#" id="logoutLink" class="dropdown-item">Logout</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-item active" data-view="dashboard">
+        <span class="sidebar-icon">📊</span>
+        <span class="sidebar-text">Dashboard</span>
+      </div>
+      <div class="sidebar-item" data-view="publish-ride">
+        <span class="sidebar-icon">➕</span>
+        <span class="sidebar-text">Publish Ride</span>
+      </div>
+      <div class="sidebar-item" data-view="bookings">
+        <span class="sidebar-icon">📋</span>
+        <span class="sidebar-text">Bookings</span>
+      </div>
+      <div class="sidebar-item" data-view="rides">
+        <span class="sidebar-icon">🚗</span>
+        <span class="sidebar-text">My Rides</span>
+      </div>
+      <div class="sidebar-item" data-view="passengers">
+        <span class="sidebar-icon">👥</span>
+        <span class="sidebar-text">Passengers</span>
+      </div>
+      <div class="sidebar-item" data-view="earnings">
+        <span class="sidebar-icon">💰</span>
+        <span class="sidebar-text">Earnings</span>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+      
+      <!-- Dashboard View -->
+      <div id="dashboardView" class="view active">
+        <h2>Dashboard</h2>
+        
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <div class="stat-icon">🚗</div>
+            <div class="stat-number" id="upcomingRidesCount">0</div>
+            <div class="stat-label">Upcoming Rides</div>
+          </div>
+          
+          <div class="stat-card green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-number" id="completedRidesCount">0</div>
+            <div class="stat-label">Completed Rides</div>
+          </div>
+          
+          <div class="stat-card orange">
+            <div class="stat-icon">📋</div>
+            <div class="stat-number" id="pendingBookingsCount">0</div>
+            <div class="stat-label">Pending Bookings</div>
+          </div>
+          
+          <div class="stat-card purple">
+            <div class="stat-icon">💵</div>
+            <div class="stat-number" id="totalEarnings">₱0</div>
+            <div class="stat-label">Total Earnings</div>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <h3>Quick Actions</h3>
+          <div class="action-buttons">
+            <button class="action-btn primary" onclick="switchView('publish-ride')">
+              ➕ Publish New Ride
+            </button>
+            <button class="action-btn secondary" onclick="switchView('bookings')">
+              📋 View Bookings
+            </button>
+            <button class="action-btn tertiary" onclick="switchView('rides')">
+              🚗 Manage Rides
+            </button>
+          </div>
+        </div>
+
+        <div class="recent-activity">
+          <h3>Recent Activity</h3>
+          <div id="recentActivityList" class="activity-list">
+            <p class="no-data">No recent activity</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Publish Ride View -->
+      <div id="publishRideView" class="view">
+        <h2>Publish a New Ride</h2>
+        
+        <form id="publishRideForm" class="ride-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>From Location</label>
+              <input type="text" name="fromLocation" value="Maryheights" readonly class="fixed-input">
+            </div>
+
+            <div class="form-group">
+              <label>Destination *</label>
+              <input type="text" name="destination" placeholder="Enter destination" required>
+            </div>
+
+            <div class="form-group">
+              <label>Date *</label>
+              <input type="date" name="rideDate" required>
+            </div>
+
+            <div class="form-group">
+              <label>Time *</label>
+              <input type="time" name="rideTime" required>
+            </div>
+
+            <div class="form-group">
+              <label>Available Seats *</label>
+              <input type="number" name="availableSeats" min="1" max="10" placeholder="Number of seats" required>
+            </div>
+
+            <div class="form-group">
+              <label>Fare per Seat (₱) *</label>
+              <input type="number" name="fare" min="1" step="0.01" placeholder="Enter fare" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Notes (Optional)</label>
+            <textarea name="notes" rows="3" placeholder="Any special instructions or information..."></textarea>
+          </div>
+
+          <div class="form-buttons">
+            <button type="button" class="btn-cancel" onclick="switchView('dashboard')">Cancel</button>
+            <button type="submit" class="btn-submit">Publish Ride</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Bookings View -->
+      <div id="bookingsView" class="view">
+        <h2>Booking Requests</h2>
+        
+        <div class="filter-tabs">
+          <button class="tab-btn active" data-filter="pending">Pending</button>
+          <button class="tab-btn" data-filter="accepted">Accepted</button>
+          <button class="tab-btn" data-filter="declined">Declined</button>
+        </div>
+
+        <div id="bookingsList" class="bookings-list">
+          <p class="no-data">No booking requests</p>
+        </div>
+      </div>
+
+      <!-- My Rides View -->
+      <div id="ridesView" class="view">
+        <h2>My Rides</h2>
+        
+        <div class="filter-tabs">
+          <button class="tab-btn active" data-filter="upcoming">Upcoming</button>
+          <button class="tab-btn" data-filter="completed">Completed</button>
+          <button class="tab-btn" data-filter="cancelled">Cancelled</button>
+        </div>
+
+        <div id="ridesList" class="rides-list">
+          <p class="no-data">No rides found</p>
+        </div>
+      </div>
+
+      <!-- Passengers View -->
+      <div id="passengersView" class="view">
+        <h2>My Passengers</h2>
+        
+        <div id="passengersList" class="passengers-grid">
+          <p class="no-data">No passengers yet</p>
+        </div>
+      </div>
+
+      <!-- Earnings View -->
+      <div id="earningsView" class="view">
+        <h2>Payments & Earnings</h2>
+        
+        <div class="earnings-summary">
+          <div class="earnings-card">
+            <div class="earnings-label">Total Earnings</div>
+            <div class="earnings-amount" id="totalEarningsAmount">₱0.00</div>
+          </div>
+          
+          <div class="earnings-card">
+            <div class="earnings-label">This Month</div>
+            <div class="earnings-amount" id="monthlyEarnings">₱0.00</div>
+          </div>
+          
+          <div class="earnings-card">
+            <div class="earnings-label">Completed Trips</div>
+            <div class="earnings-amount" id="completedTrips">0</div>
+          </div>
+        </div>
+
+        <div class="transactions-section">
+          <h3>Transaction History</h3>
+          <div id="transactionsList" class="transactions-list">
+            <p class="no-data">No transactions yet</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Notification Panel -->
+  <div id="notificationPanel" class="notification-panel">
+    <div class="notification-header">
+      <h3>Notifications</h3>
+      <button class="close-btn" id="closeNotifications">✕</button>
+    </div>
+    <div id="notificationsList" class="notifications-list">
+      <p class="no-data">No notifications</p>
+    </div>
+  </div>
+
+  <!-- Booking Detail Modal -->
+  <div id="bookingModal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeBookingModal()">×</button>
+      <h2>Booking Details</h2>
+      <div id="bookingModalContent"></div>
+    </div>
+  </div>
+
+  <!-- Ride Detail Modal -->
+  <div id="rideModal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeRideModal()">×</button>
+      <h2>Ride Details</h2>
+      <div id="rideModalContent"></div>
+    </div>
+  </div>
+
+  <!-- Rating Modal -->
+  <div id="ratingModal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeRatingModal()">×</button>
+      <h2>Rate Passenger</h2>
+      <div id="ratingModalContent"></div>
+    </div>
+  </div>
+
+  <script src="javascript/driver_dashboard.js"></script>
+</body>
+</html>
