@@ -1,8 +1,10 @@
 <?php
-session_start();
-require_once 'connect.php';
+// RideKadaApps/php/create_booking.php
+// Creates a PENDING booking that requires driver acceptance before payment
 
 header('Content-Type: application/json');
+session_start();
+require_once 'connect.php';
 
 // Enable error logging
 error_reporting(E_ALL);
@@ -22,11 +24,11 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     exit;
 }
 
-// Log received data for debugging
-error_log("Received payment data: " . print_r($input, true));
+// Log received data
+error_log("Received booking data: " . print_r($input, true));
 
-// Updated required fields to match what we're actually sending
-$requiredFields = ['publishedRideId', 'driverId', 'driverName', 'driverPhone', 'vehicle', 'from', 'to', 'date', 'passengers', 'totalFare', 'paymentMethod'];
+// Required fields
+$requiredFields = ['publishedRideId', 'passengers', 'totalFare'];
 
 foreach ($requiredFields as $field) {
     if (!isset($input[$field]) || (is_string($input[$field]) && trim($input[$field]) === '')) {
@@ -39,42 +41,18 @@ foreach ($requiredFields as $field) {
 $userId = null;
 if (isset($input['userId']) && $input['userId'] > 0) {
     $userId = intval($input['userId']);
-} elseif (isset($_SESSION['user_id'])) {
-    $userId = intval($_SESSION['user_id']);
+} elseif (isset($_SESSION['user']['UserID'])) {
+    $userId = intval($_SESSION['user']['UserID']);
 }
 
-// If no user ID available, we'll use a default for testing (remove in production)
-if (!$userId) {
-    error_log("Warning: No user ID found, using default ID 1 for testing");
-    $userId = 1; // Default for testing - REMOVE THIS IN PRODUCTION
-}
-
-// Extract and validate data
+// Extract data
 $publishedRideId = intval($input['publishedRideId']);
-$driverId = intval($input['driverId']);
-$driverName = trim($input['driverName']);
-$driverPhone = trim($input['driverPhone']);
-$driverEmail = isset($input['driverEmail']) ? trim($input['driverEmail']) : '';
-$vehicle = trim($input['vehicle']);
-$plateNumber = isset($input['plateNumber']) ? trim($input['plateNumber']) : '';
-$fromLocation = trim($input['from']);
-$toLocation = trim($input['to']);
-$rideDate = trim($input['date']);
-$rideTime = isset($input['time']) ? trim($input['time']) : '00:00:00';
 $passengers = intval($input['passengers']);
-$pricePerSeat = isset($input['pricePerSeat']) ? floatval($input['pricePerSeat']) : 0;
 $totalFare = floatval($input['totalFare']);
-$paymentMethod = trim($input['paymentMethod']);
-$availableSeats = isset($input['availableSeats']) ? intval($input['availableSeats']) : 0;
 
-// Validate data types
+// Validate data
 if ($publishedRideId <= 0) {
-    echo json_encode(['success' => false, 'message' => 'Invalid published ride ID']);
-    exit;
-}
-
-if ($driverId <= 0) {
-    echo json_encode(['success' => false, 'message' => 'Invalid driver ID']);
+    echo json_encode(['success' => false, 'message' => 'Invalid ride ID']);
     exit;
 }
 
@@ -85,6 +63,11 @@ if ($passengers <= 0) {
 
 if ($totalFare <= 0) {
     echo json_encode(['success' => false, 'message' => 'Invalid fare amount']);
+    exit;
+}
+
+if (!$userId || $userId <= 0) {
+    echo json_encode(['success' => false, 'message' => 'User not logged in. Please login first.']);
     exit;
 }
 
@@ -99,9 +82,13 @@ try {
 
     // 1. Verify the published ride exists and has enough seats
     $checkRideStmt = $conn->prepare("
-        SELECT AvailableSeats, Status 
-        FROM published_rides 
-        WHERE PublishedRideID = ? AND Status = 'Available'
+        SELECT pr.AvailableSeats, pr.Status, pr.PricePerSeat, pr.Destination, pr.RideDate, pr.RideTime,
+               d.Fname as DriverFname, d.Lname as DriverLname, d.PhoneNumber as DriverPhone,
+               v.Model, v.Color, v.PlateNumber
+        FROM published_rides pr
+        JOIN driver d ON pr.DriverID = d.DriverID
+        JOIN vehicle v ON d.VehicleID = v.VehicleID
+        WHERE pr.PublishedRideID = ? AND pr.Status = 'Available'
     ");
     
     if (!$checkRideStmt) {
@@ -122,10 +109,24 @@ try {
     }
     $checkRideStmt->close();
 
-    // 2. Create booking record in ride_bookings table
+    // 2. Check if user already has a pending booking for this ride
+    $checkExistingStmt = $conn->prepare("
+        SELECT BookingID FROM ride_bookings 
+        WHERE PublishedRideID = ? AND UserID = ? AND BookingStatus = 'Pending'
+    ");
+    $checkExistingStmt->bind_param("ii", $publishedRideId, $userId);
+    $checkExistingStmt->execute();
+    $existingResult = $checkExistingStmt->get_result();
+    
+    if ($existingResult->num_rows > 0) {
+        throw new Exception("You already have a pending booking for this ride");
+    }
+    $checkExistingStmt->close();
+
+    // 3. Create PENDING booking (no payment yet)
     $bookingStmt = $conn->prepare("
         INSERT INTO ride_bookings (PublishedRideID, UserID, SeatsBooked, TotalFare, BookingStatus, PaymentStatus)
-        VALUES (?, ?, ?, ?, 'Confirmed', 'Paid')
+        VALUES (?, ?, ?, ?, 'Pending', 'Unpaid')
     ");
     
     if (!$bookingStmt) {
@@ -141,26 +142,7 @@ try {
     $bookingId = $conn->insert_id;
     $bookingStmt->close();
 
-    // 3. Create payment record
-    $paymentStmt = $conn->prepare("
-        INSERT INTO payment (BookingID, Amount, PaymentMethod, PaymentDate, Status)
-        VALUES (?, ?, ?, NOW(), 'Completed')
-    ");
-    
-    if (!$paymentStmt) {
-        throw new Exception("Failed to prepare payment statement: " . $conn->error);
-    }
-    
-    $paymentStmt->bind_param("ids", $bookingId, $totalFare, $paymentMethod);
-    
-    if (!$paymentStmt->execute()) {
-        throw new Exception("Failed to create payment record: " . $paymentStmt->error);
-    }
-    
-    $paymentId = $conn->insert_id;
-    $paymentStmt->close();
-
-    // 4. Update available seats in published_rides
+    // 4. Temporarily reserve seats (reduce available seats)
     $newAvailableSeats = $rideData['AvailableSeats'] - $passengers;
     $newStatus = ($newAvailableSeats <= 0) ? 'Full' : 'Available';
     
@@ -182,33 +164,48 @@ try {
     
     $updateSeatsStmt->close();
 
-    // 5. Create transaction history record
-    $transactionStmt = $conn->prepare("
-        INSERT INTO transactionhistory (PaymentID, TransactionDate, TotalAmount, TransactionType)
-        VALUES (?, NOW(), ?, 'Ride Payment')
+    // 5. Create notification for driver
+    $notificationTitle = "New Booking Request";
+    $notificationMessage = "You have a new booking request for your ride to " . $rideData['Destination'] . 
+                          " on " . date('M d, Y', strtotime($rideData['RideDate'])) . 
+                          ". " . $passengers . " seat(s) requested.";
+    
+    $notifyStmt = $conn->prepare("
+        INSERT INTO driver_notifications (DriverID, Title, Message, IsRead)
+        SELECT pr.DriverID, ?, ?, FALSE
+        FROM published_rides pr
+        WHERE pr.PublishedRideID = ?
     ");
     
-    if ($transactionStmt) {
-        $transactionStmt->bind_param("id", $paymentId, $totalFare);
-        $transactionStmt->execute();
-        $transactionStmt->close();
+    if ($notifyStmt) {
+        $notifyStmt->bind_param("ssi", $notificationTitle, $notificationMessage, $publishedRideId);
+        $notifyStmt->execute();
+        $notifyStmt->close();
     }
 
     // Commit transaction
     $conn->commit();
 
     // Generate reference number
-    $referenceNumber = 'RK' . str_pad($bookingId, 8, '0', STR_PAD_LEFT);
+    $referenceNumber = 'RKB' . str_pad($bookingId, 8, '0', STR_PAD_LEFT);
 
     // Log success
-    error_log("Booking successful - ID: $bookingId, Reference: $referenceNumber");
+    error_log("Booking created - ID: $bookingId, Reference: $referenceNumber, Status: Pending");
 
     echo json_encode([
         'success' => true,
-        'message' => 'Payment successful! Your booking has been confirmed.',
+        'message' => 'Booking request submitted! Waiting for driver confirmation.',
         'bookingId' => $bookingId,
         'referenceNumber' => $referenceNumber,
-        'seatsRemaining' => $newAvailableSeats
+        'status' => 'Pending',
+        'rideDetails' => [
+            'destination' => $rideData['Destination'],
+            'rideDate' => $rideData['RideDate'],
+            'rideTime' => $rideData['RideTime'],
+            'driverName' => $rideData['DriverFname'] . ' ' . $rideData['DriverLname'],
+            'vehicle' => $rideData['Color'] . ' ' . $rideData['Model'],
+            'plateNumber' => $rideData['PlateNumber']
+        ]
     ]);
 
 } catch (Exception $e) {
@@ -218,11 +215,11 @@ try {
     }
     
     // Log error
-    error_log("Payment processing error: " . $e->getMessage());
+    error_log("Booking creation error: " . $e->getMessage());
     
     echo json_encode([
         'success' => false,
-        'message' => 'Payment processing failed: ' . $e->getMessage()
+        'message' => $e->getMessage()
     ]);
 }
 

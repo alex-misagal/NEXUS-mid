@@ -17,11 +17,12 @@ $sql = "SELECT
             pr.RideTime,
             pr.AvailableSeats,
             pr.PricePerSeat,
+            pr.Destination,
+            pr.FromLocation,
             pr.Notes,
             d.DriverID, 
             d.Fname, 
             d.Lname, 
-            d.Destination, 
             d.PhoneNumber,
             d.Email,
             v.Capacity,
@@ -54,9 +55,9 @@ if (!empty($params)) {
 $stmt->execute();
 $result = $stmt->get_result();
 
-$drivers = [];
+$rides = [];
 while ($row = $result->fetch_assoc()) {
-    $drivers[] = $row;
+    $rides[] = $row;
 }
 ?>
 
@@ -70,7 +71,7 @@ while ($row = $result->fetch_assoc()) {
 </head>
 <body>
 
-  <!-- Navigation (Same as home.html) -->
+  <!-- Navigation -->
   <nav class="navbar">
     <div class="logo-section">
       <img src="../media/logo.png" alt="RideKada Logo" class="logo-circle">
@@ -95,7 +96,7 @@ while ($row = $result->fetch_assoc()) {
 
     <!-- Results Section -->
     <div class="results-section">
-      <?php if (empty($drivers)): ?>
+      <?php if (empty($rides)): ?>
         <div class="no-results">
           <div class="no-results-icon">🚗</div>
           <h3>No Rides Available</h3>
@@ -108,24 +109,25 @@ while ($row = $result->fetch_assoc()) {
       <?php else: ?>
         <div class="results-header">
           <h3>Available Rides</h3>
-          <span class="results-count"><?php echo count($drivers); ?> ride(s) found</span>
+          <span class="results-count"><?php echo count($rides); ?> ride(s) found</span>
         </div>
 
         <!-- Driver Cards Grid -->
         <div class="drivers-grid">
-          <?php foreach ($drivers as $d): ?>
+          <?php foreach ($rides as $ride): ?>
             <?php 
-              $totalFare = $d['PricePerSeat'] * $passengers;
+              $pricePerSeat = floatval($ride['PricePerSeat']);
+              $totalFare = $pricePerSeat * $passengers;
             ?>
-            <div class="driver-card" onclick="selectDriverCard(this, '<?php echo $d['PublishedRideID']; ?>')">
+            <div class="driver-card" onclick="selectDriverCard(this, '<?php echo $ride['PublishedRideID']; ?>')">
               <!-- Card Header with Avatar -->
               <div class="driver-card-header">
                 <div class="driver-avatar-large">
-                  <?php echo strtoupper(substr($d['Fname'], 0, 1)); ?>
+                  <?php echo strtoupper(substr($ride['Fname'], 0, 1)); ?>
                 </div>
-                <div class="driver-name-card"><?php echo htmlspecialchars($d['Fname'] . ' ' . $d['Lname']); ?></div>
+                <div class="driver-name-card"><?php echo htmlspecialchars($ride['Fname'] . ' ' . $ride['Lname']); ?></div>
                 <div class="driver-rating">
-                  <span>⭐</span> 4.8 • <?php echo $d['AvailableSeats']; ?> seats available
+                  <span>⭐</span> 4.8 • <?php echo $ride['AvailableSeats']; ?> seats available
                 </div>
               </div>
 
@@ -136,7 +138,7 @@ while ($row = $result->fetch_assoc()) {
                   <div class="info-icon">📍</div>
                   <div class="info-content">
                     <div class="info-label">Destination</div>
-                    <div class="info-value"><?php echo htmlspecialchars($d['Destination']); ?></div>
+                    <div class="info-value"><?php echo htmlspecialchars($ride['Destination']); ?></div>
                   </div>
                 </div>
 
@@ -145,8 +147,8 @@ while ($row = $result->fetch_assoc()) {
                   <div class="info-icon">📅</div>
                   <div class="info-content">
                     <div class="info-label">Date & Time</div>
-                    <div class="info-value"><?php echo date('M d, Y', strtotime($d['RideDate'])); ?></div>
-                    <div class="vehicle-details"><?php echo date('g:i A', strtotime($d['RideTime'])); ?></div>
+                    <div class="info-value"><?php echo date('M d, Y', strtotime($ride['RideDate'])); ?></div>
+                    <div class="vehicle-details"><?php echo date('g:i A', strtotime($ride['RideTime'])); ?></div>
                   </div>
                 </div>
 
@@ -155,8 +157,8 @@ while ($row = $result->fetch_assoc()) {
                   <div class="info-icon">🚗</div>
                   <div class="info-content">
                     <div class="info-label">Vehicle</div>
-                    <div class="info-value"><?php echo htmlspecialchars($d['Color'] . ' ' . $d['Model']); ?></div>
-                    <div class="vehicle-details"><?php echo htmlspecialchars($d['PlateNumber']); ?></div>
+                    <div class="info-value"><?php echo htmlspecialchars($ride['Color'] . ' ' . $ride['Model']); ?></div>
+                    <div class="vehicle-details"><?php echo htmlspecialchars($ride['PlateNumber']); ?></div>
                   </div>
                 </div>
 
@@ -165,7 +167,7 @@ while ($row = $result->fetch_assoc()) {
                   <div class="info-icon">💰</div>
                   <div class="info-content">
                     <div class="info-label">Price</div>
-                    <div class="info-value">₱<?php echo number_format($d['PricePerSeat'], 2); ?> per seat</div>
+                    <div class="info-value">₱<?php echo number_format($pricePerSeat, 2); ?> per seat</div>
                     <div class="vehicle-details">Total: ₱<?php echo number_format($totalFare, 2); ?></div>
                   </div>
                 </div>
@@ -175,17 +177,17 @@ while ($row = $result->fetch_assoc()) {
                   <div class="info-icon">📞</div>
                   <div class="info-content">
                     <div class="info-label">Contact</div>
-                    <div class="info-value"><?php echo htmlspecialchars($d['PhoneNumber']); ?></div>
+                    <div class="info-value"><?php echo htmlspecialchars($ride['PhoneNumber']); ?></div>
                   </div>
                 </div>
 
-                <?php if ($d['Notes']): ?>
+                <?php if (!empty($ride['Notes'])): ?>
                 <!-- Notes -->
                 <div class="info-row">
                   <div class="info-icon">📝</div>
                   <div class="info-content">
                     <div class="info-label">Notes</div>
-                    <div class="info-value" style="font-size: 13px;"><?php echo htmlspecialchars($d['Notes']); ?></div>
+                    <div class="info-value" style="font-size: 13px;"><?php echo htmlspecialchars($ride['Notes']); ?></div>
                   </div>
                 </div>
                 <?php endif; ?>
@@ -193,7 +195,7 @@ while ($row = $result->fetch_assoc()) {
 
               <!-- Card Footer with Select Button -->
               <div class="driver-card-footer">
-                <button class="select-driver-btn" onclick="event.stopPropagation(); selectDriverCard(this.parentElement.parentElement, '<?php echo $d['PublishedRideID']; ?>')">
+                <button class="select-driver-btn" onclick="event.stopPropagation(); selectDriverCard(this.parentElement.parentElement, '<?php echo $ride['PublishedRideID']; ?>')">
                   Select This Ride
                 </button>
               </div>
@@ -297,13 +299,14 @@ while ($row = $result->fetch_assoc()) {
       
       <div class="modal-buttons">
         <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
-        <button class="modal-btn modal-btn-book" onclick="confirmBooking()">Proceed to Payment</button>
+        <button class="modal-btn modal-btn-book" onclick="confirmBooking()">Request Booking</button>
       </div>
     </div>
   </div>
 
   <script>
-    const driversData = <?php echo json_encode($drivers); ?>;
+    // Pass PHP data to JavaScript with all necessary fields
+    const ridesData = <?php echo json_encode($rides); ?>;
     const searchParams = {
       from: "<?php echo htmlspecialchars($from); ?>",
       to: "<?php echo htmlspecialchars($to); ?>",
