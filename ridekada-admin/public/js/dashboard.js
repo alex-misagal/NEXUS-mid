@@ -154,6 +154,8 @@ async function loadDashboardStats() {
       document.getElementById('totalUsers').textContent = stats.totalUsers;
       document.getElementById('availableRides').textContent = stats.availableRides;
       document.getElementById('totalExpenses').textContent = `₱${stats.totalExpenses.toLocaleString()}`;
+      
+      renderUsersChart(stats.activeDrivers, stats.registeredPassengers);
     }
   } catch (error) {
     console.error('Error loading dashboard stats:', error);
@@ -253,6 +255,23 @@ async function loadUsers(filter = 'all') {
     
     if (data.success) {
       const tbody = document.getElementById('usersTableBody');
+      const table = document.querySelector('.data-table');
+      const headerRow = table.querySelector('thead tr');
+      
+      // After fetching data
+const isPassengerOnly = filter === 'passenger';
+const isAdminOnly = filter === 'admin';
+
+// Hide Status header
+const statusHeader = headerRow.cells[5];
+if (statusHeader) {
+  statusHeader.style.display = (isPassengerOnly || isAdminOnly) ? 'none' : '';
+}
+
+// Hide Status cells
+document.querySelectorAll('#usersTableBody td:nth-child(6)').forEach(cell => {
+  cell.style.display = (isPassengerOnly || isAdminOnly) ? 'none' : '';
+});
       
       if (data.users.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px;">No users found</td></tr>';
@@ -260,20 +279,32 @@ async function loadUsers(filter = 'all') {
       }
       
       tbody.innerHTML = data.users.map(user => `
-        <tr>
-          <td>${user.id}</td>
-          <td>${user.Fname} ${user.Lname}</td>
-          <td>${user.Email || 'N/A'}</td>
-          <td>${user.UserType}</td>
-          <td>${user.PhoneNumber}</td>
-          <td><span class="status-badge ${user.Status.toLowerCase()}">${user.Status}</span></td>
-          <td class="action-buttons">
-            <button class="btn-action btn-view" onclick="viewUser(${user.id}, '${user.UserType}')">👁️ View</button>
-            <button class="btn-action btn-edit" onclick="editUser(${user.id}, '${user.UserType}')">✏️ Edit</button>
-            <button class="btn-action btn-delete" onclick="deleteUser(${user.id}, '${user.UserType}')">🗑️ Delete</button>
-          </td>
-        </tr>
-      `).join('');
+  <tr>
+    <td>${user.id}</td>
+    <td>
+      ${user.UserType === 'Admin' ? `<strong>${user.Fname}</strong> (Admin)` : `${user.Fname} ${user.Lname}`}
+    </td>
+    <td>${user.Email || 'N/A'}</td>
+    <td><strong>${user.UserType}</strong></td>
+    <td>${user.PhoneNumber || 'N/A'}</td>
+    
+    <!-- Status: Only for Drivers -->
+    <td style="display: ${isPassengerOnly || isAdminOnly ? 'none' : ''}">
+      ${user.UserType === 'Driver' 
+        ? `<span class="status-badge ${user.Status.toLowerCase()}">${user.Status}</span>` 
+        : '-'}
+    </td>
+    
+    <td class="action-buttons">
+      <button class="btn-action btn-view" onclick="viewUser(${user.id}, '${user.UserType}')">👁️ View</button>
+      ${user.UserType !== 'Admin' ? `
+        <button class="btn-action btn-edit" onclick="editUser(${user.id}, '${user.UserType}')">✏️ Edit</button>
+        <button class="btn-action btn-delete" onclick="deleteUser(${user.id}, '${user.UserType}')">🗑️ Delete</button>
+      ` : `
+      `}
+    </td>
+  </tr>
+`).join('');
     }
   } catch (error) {
     console.error('Error loading users:', error);
@@ -298,72 +329,57 @@ async function viewUser(id, type) {
       const modal = document.getElementById('userModal');
       const content = document.getElementById('userModalContent');
       
-      if (type === 'Driver') {
-        content.innerHTML = `
-          <div class="modal-grid">
-            <div class="modal-section">
-              <h3>Driver Information</h3>
-              <div class="driver-avatar">👤</div>
-              <div class="modal-field">
-                <label>Name</label>
-                <input type="text" value="${user.Fname} ${user.Lname}" readonly>
-              </div>
-              <div class="modal-field">
-                <label>Email</label>
-                <input type="text" value="${user.Email || 'N/A'}" readonly>
-              </div>
-              <div class="modal-field">
-                <label>Phone</label>
-                <input type="text" value="${user.PhoneNumber}" readonly>
-              </div>
-              <div class="modal-field">
-                <label>Status</label>
-                <input type="text" value="${user.Status}" readonly>
-              </div>
-            </div>
-            
-            <div class="modal-section">
-              <h3>Vehicle Information</h3>
-              <div class="modal-field">
-                <label>Model</label>
-                <input type="text" value="${user.Model || 'N/A'}" readonly>
-              </div>
-              <div class="modal-field">
-                <label>Plate Number</label>
-                <input type="text" value="${user.PlateNumber || 'N/A'}" readonly>
-              </div>
-              <div class="modal-field">
-                <label>Color</label>
-                <input type="text" value="${user.Color || 'N/A'}" readonly>
-              </div>
-              <div class="modal-field">
-                <label>Capacity</label>
-                <input type="text" value="${user.Capacity || 'N/A'} People" readonly>
-              </div>
-            </div>
-          </div>
-        `;
-      } else {
-        content.innerHTML = `
+      let html = `
+        <div class="modal-grid">
           <div class="modal-section">
-            <h3>Passenger Information</h3>
-            <div class="passenger-avatar">👤</div>
+            <h3>${type} Information</h3>
+            <div class="driver-avatar">👤</div>
             <div class="modal-field">
               <label>Name</label>
               <input type="text" value="${user.Fname} ${user.Lname}" readonly>
             </div>
             <div class="modal-field">
               <label>Email</label>
-              <input type="text" value="${user.Email}" readonly>
+              <input type="text" value="${user.Email || 'N/A'}" readonly>
             </div>
             <div class="modal-field">
               <label>Phone</label>
               <input type="text" value="${user.PhoneNumber}" readonly>
             </div>
+            <div class="modal-field">
+              <label>Status</label>
+              <input type="text" value="${user.Status}" readonly>
+            </div>
+          </div>
+      `;
+      
+      if (type === 'Driver') {
+        html += `
+          <div class="modal-section">
+            <h3>Vehicle Information</h3>
+            <div class="modal-field">
+              <label>Model</label>
+              <input type="text" value="${user.Model || 'N/A'}" readonly>
+            </div>
+            <div class="modal-field">
+              <label>Plate Number</label>
+              <input type="text" value="${user.PlateNumber || 'N/A'}" readonly>
+            </div>
+            <div class="modal-field">
+              <label>Color</label>
+              <input type="text" value="${user.Color || 'N/A'}" readonly>
+            </div>
+            <div class="modal-field">
+              <label>Capacity</label>
+              <input type="text" value="${user.Capacity || 'N/A'}" readonly>
+            </div>
           </div>
         `;
       }
       
+      html += `</div>`;
+      
+      content.innerHTML = html;
       modal.classList.add('active');
     }
   } catch (error) {
@@ -373,6 +389,7 @@ async function viewUser(id, type) {
 }
 
 // Edit user
+// Edit user - FIXED with proper DOM creation
 async function editUser(id, type) {
   currentUserId = id;
   currentUserType = type.toLowerCase();
@@ -387,94 +404,101 @@ async function editUser(id, type) {
     
     if (data.success) {
       const user = data.user;
-      const modal = document.getElementById('editModal');
       const formContent = document.getElementById('editFormContent');
-      
+      formContent.innerHTML = ''; // Clear any previous fields
+
+      // Helper: Create text/password/number input field
+      const createInputField = (labelText, name, value = '', type = 'text', required = false) => {
+        const div = document.createElement('div');
+        div.className = 'modal-field';
+
+        const label = document.createElement('label');
+        label.textContent = labelText;
+        div.appendChild(label);
+
+        const input = document.createElement('input');
+        input.type = type;
+        input.name = name;
+        input.value = value || '';
+        if (required) input.required = true;
+        div.appendChild(input);
+
+        return div;
+      };
+
+      // Helper: Create select field
+      const createSelectField = (labelText, name, options, selectedValue) => {
+        const div = document.createElement('div');
+        div.className = 'modal-field';
+
+        const label = document.createElement('label');
+        label.textContent = labelText;
+        div.appendChild(label);
+
+        const select = document.createElement('select');
+        select.name = name;
+        select.required = true;
+
+        options.forEach(opt => {
+          const option = document.createElement('option');
+          option.value = opt.value;
+          option.textContent = opt.label;
+          if (opt.value === selectedValue) option.selected = true;
+          select.appendChild(option);
+        });
+
+        div.appendChild(select);
+        return div;
+      };
+
+      // Add common fields
+      formContent.appendChild(createInputField('First Name', 'Fname', user.Fname, 'text', true));
+      formContent.appendChild(createInputField('Last Name', 'Lname', user.Lname, 'text', true));
+      formContent.appendChild(createInputField('Email', 'Email', user.Email || '', 'email'));
+      formContent.appendChild(createInputField('Phone Number', 'PhoneNumber', user.PhoneNumber, 'tel', true));
+      formContent.appendChild(createInputField('Password (leave blank to keep current)', 'Password', '', 'password'));
+
+      // Driver-specific fields
       if (type === 'Driver') {
-        formContent.innerHTML = `
-          <div class="modal-field">
-            <label>First Name</label>
-            <input type="text" name="Fname" value="${user.Fname}" required>
-          </div>
-          <div class="modal-field">
-            <label>Last Name</label>
-            <input type="text" name="Lname" value="${user.Lname}" required>
-          </div>
-          <div class="modal-field">
-            <label>Email</label>
-            <input type="email" name="Email" value="${user.Email || ''}" required>
-          </div>
-          <div class="modal-field">
-            <label>Phone Number</label>
-            <input type="text" name="PhoneNumber" value="${user.PhoneNumber}" required>
-          </div>
-          <div class="modal-field">
-            <label>Password (leave blank to keep current)</label>
-            <input type="password" name="Password">
-          </div>
-          <hr style="margin: 20px 0;">
-          <h4>Vehicle Information</h4>
-          <div class="modal-field">
-            <label>Plate Number</label>
-            <input type="text" name="PlateNumber" value="${user.PlateNumber || ''}">
-          </div>
-          <div class="modal-field">
-            <label>Model</label>
-            <input type="text" name="Model" value="${user.Model || ''}">
-          </div>
-          <div class="modal-field">
-            <label>Color</label>
-            <input type="text" name="Color" value="${user.Color || ''}">
-          </div>
-          <div class="modal-field">
-            <label>Capacity</label>
-            <input type="number" name="Capacity" value="${user.Capacity || ''}">
-          </div>
-        `;
-      } else {
-        formContent.innerHTML = `
-          <div class="modal-field">
-            <label>First Name</label>
-            <input type="text" name="Fname" value="${user.Fname}" required>
-          </div>
-          <div class="modal-field">
-            <label>Last Name</label>
-            <input type="text" name="Lname" value="${user.Lname}" required>
-          </div>
-          <div class="modal-field">
-            <label>Email</label>
-            <input type="email" name="Email" value="${user.Email}" required>
-          </div>
-          <div class="modal-field">
-            <label>Phone Number</label>
-            <input type="text" name="PhoneNumber" value="${user.PhoneNumber}" required>
-          </div>
-          <div class="modal-field">
-            <label>Password (leave blank to keep current)</label>
-            <input type="password" name="Password">
-          </div>
-        `;
+        const statusOptions = [
+          { value: 'Active', label: 'Active' },
+          { value: 'Suspended', label: 'Suspended' },
+          { value: 'Inactive', label: 'Inactive' },
+          { value: 'Pending', label: 'Pending' },
+          { value: 'Declined', label: 'Declined' }
+        ];
+
+        formContent.appendChild(createSelectField('Status', 'Status', statusOptions, user.Status));
+
+        const vehicleHeader = document.createElement('h3');
+        vehicleHeader.textContent = 'Vehicle Information';
+        vehicleHeader.style.marginTop = '20px';
+        formContent.appendChild(vehicleHeader);
+
+        formContent.appendChild(createInputField('Plate Number', 'PlateNumber', user.PlateNumber || ''));
+        formContent.appendChild(createInputField('Model', 'Model', user.Model || ''));
+        formContent.appendChild(createInputField('Color', 'Color', user.Color || ''));
+        formContent.appendChild(createInputField('Capacity', 'Capacity', user.Capacity || '', 'number'));
       }
-      
-      modal.classList.add('active');
+
+      // Attach submit handler
+      document.getElementById('editUserForm').onsubmit = handleEditSubmit;
+
+      // Show modal
+      document.getElementById('editModal').classList.add('active');
     }
   } catch (error) {
-    console.error('Error loading user for edit:', error);
-    alert('Failed to load user details');
+    console.error('Error loading user for editing:', error);
+    alert('Failed to load user details.');
   }
 }
 
-// Save edited user
-document.getElementById('editUserForm')?.addEventListener('submit', async (e) => {
+// Handle edit submit
+async function handleEditSubmit(e) {
   e.preventDefault();
   
   const formData = new FormData(e.target);
   const data = Object.fromEntries(formData);
-  
-  // Remove empty password
-  if (!data.Password) {
-    delete data.Password;
-  }
   
   try {
     const response = await fetch(
@@ -494,7 +518,9 @@ document.getElementById('editUserForm')?.addEventListener('submit', async (e) =>
     if (result.success) {
       alert('User updated successfully!');
       closeEditModal();
-      loadUsers();
+      loadUsers(); // Reload the list
+      loadDashboardStats(); // Update stats if status changed
+      if (currentView === 'new-users') loadNewUsers();
     } else {
       alert('Failed to update user: ' + result.message);
     }
@@ -502,30 +528,26 @@ document.getElementById('editUserForm')?.addEventListener('submit', async (e) =>
     console.error('Error updating user:', error);
     alert('Failed to update user');
   }
-});
+}
 
 // Delete user
 async function deleteUser(id, type) {
-  if (!confirm(`Are you sure you want to delete this ${type}?`)) {
-    return;
-  }
+  if (!confirm('Are you sure you want to delete this user?')) return;
   
   try {
-    const response = await fetch(
-      `${API_URL}/api/admin/users/${type.toLowerCase()}/${id}`,
-      {
-        method: 'DELETE',
-        credentials: 'include'
-      }
-    );
+    const response = await fetch(`${API_URL}/api/admin/users/${type.toLowerCase()}/${id}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
     
     const data = await response.json();
     
     if (data.success) {
       alert('User deleted successfully!');
       loadUsers();
+      loadDashboardStats();
     } else {
-      alert('Failed to delete user: ' + data.message);
+      alert('Failed to delete user');
     }
   } catch (error) {
     console.error('Error deleting user:', error);
@@ -533,7 +555,7 @@ async function deleteUser(id, type) {
   }
 }
 
-// Load new/pending users
+// Load new users (pending)
 async function loadNewUsers() {
   try {
     const response = await fetch(`${API_URL}/api/admin/new-users`, {
@@ -743,10 +765,7 @@ function handleFilter(e) {
   this.classList.add('active');
   
   const filter = this.dataset.type;
-  
-  if (currentView === 'full-list' || currentView === 'manage-users') {
     loadUsers(filter);
-  }
 }
 
 // Handle search
@@ -780,32 +799,7 @@ window.addEventListener('click', (e) => {
   }
 });
 
-async function loadDashboardStats() {
-  try {
-    const response = await fetch(`${API_URL}/api/admin/dashboard-stats`, {
-      credentials: 'include'
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      const stats = data.stats;
-
-      document.getElementById('activeDrivers').textContent = stats.activeDrivers;
-      document.getElementById('registeredPassengers').textContent = stats.registeredPassengers;
-      document.getElementById('totalEarnings').textContent = `₱${stats.totalEarnings.toLocaleString()}`;
-      document.getElementById('announcements').textContent = stats.announcements;
-      document.getElementById('totalUsers').textContent = stats.totalUsers;
-      document.getElementById('availableRides').textContent = stats.availableRides;
-      document.getElementById('totalExpenses').textContent = `₱${stats.totalExpenses.toLocaleString()}`;
-
-      renderUsersChart(stats.activeDrivers, stats.registeredPassengers);
-    }
-  } catch (error) {
-    console.error('Error loading dashboard stats:', error);
-  }
-}
-
+// Render users chart
 function renderUsersChart(drivers, passengers) {
   const ctx = document.getElementById('usersChart');
 
@@ -851,6 +845,7 @@ function renderUsersChart(drivers, passengers) {
   });
 }
 
+// Load monthly earnings
 async function loadMonthlyEarnings() {
   try {
     const res = await fetch('/api/admin/earnings/monthly', {
@@ -870,8 +865,7 @@ async function loadMonthlyEarnings() {
   }
 }
 
-
-
+// Render monthly earnings chart
 function renderMonthlyEarningsChart(data) {
   const canvas = document.getElementById('dailyEarningsChart');
   if (!canvas) return;

@@ -62,6 +62,13 @@ async function initializeDatabase() {
       )
     `);
     
+    // Ensure driver table has proper Status enum (safe to run multiple times)
+    await connection.query(`
+      ALTER TABLE driver 
+      MODIFY COLUMN Status ENUM('Active', 'Suspended', 'Inactive', 'Pending', 'Declined') 
+      DEFAULT 'Pending'
+    `);
+
     // Insert default admin if table is empty
     const [admins] = await connection.query('SELECT COUNT(*) as count FROM admin');
     if (admins[0].count === 0) {
@@ -173,34 +180,27 @@ app.get('/api/admin/check-session', (req, res) => {
 
 // ===== DASHBOARD STATS =====
 
+// Dashboard stats — count only active drivers, all passengers are always counted
 app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
   try {
-    // Active Drivers
     const [activeDrivers] = await pool.query(
       "SELECT COUNT(*) as count FROM driver WHERE Status = 'Active'"
     );
     
-    // Registered Passengers (Users)
-    const [passengers] = await pool.query(
-      'SELECT COUNT(*) as count FROM user'
-    );
+    const [passengers] = await pool.query('SELECT COUNT(*) as count FROM user');
     
-    // Total Earnings (sum of completed payments)
     const [earnings] = await pool.query(
       "SELECT COALESCE(SUM(Amount), 0) as total FROM payment WHERE Status = 'Completed'"
     );
     
-    // Total Expenses (placeholder - you can customize this)
     const [expenses] = await pool.query(
       "SELECT COALESCE(SUM(TotalFare), 0) as total FROM booking WHERE Status = 'Completed'"
     );
     
-    // Available Rides (Active drivers)
     const [availableRides] = await pool.query(
       "SELECT COUNT(*) as count FROM driver WHERE Status = 'Active'"
     );
     
-    // Total Users (drivers + passengers)
     const totalUsers = activeDrivers[0].count + passengers[0].count;
     
     res.json({
@@ -209,7 +209,7 @@ app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
         activeDrivers: activeDrivers[0].count,
         registeredPassengers: passengers[0].count,
         totalEarnings: parseFloat(earnings[0].total),
-        announcements: 1, // Static for now
+        announcements: 1,
         totalExpenses: parseFloat(expenses[0].total),
         availableRides: availableRides[0].count,
         totalUsers: totalUsers
@@ -224,7 +224,6 @@ app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
     });
   }
 });
-
 // Monthly Earnings
 app.get('/api/admin/earnings/monthly', requireAuth, async (req, res) => {
   try {
@@ -253,76 +252,93 @@ app.get('/api/admin/earnings/monthly', requireAuth, async (req, res) => {
 
 // ===== USER MANAGEMENT ROUTES =====
 
-// Get all users (drivers and passengers combined)
+// Get all users (drivers, passengers, and admins)
 app.get('/api/admin/users', requireAuth, async (req, res) => {
   try {
-    const { userType, status } = req.query;
+    const { userType } = req.query;
     
-    let query = `
-      SELECT 
-        u.UserID as id,
-        u.Fname,
-        u.Lname,
-        u.Email,
-        u.PhoneNumber,
-        'Passenger' as UserType,
-        'Active' as Status
-      FROM user u
-    `;
+    let rows = [];
     
     if (userType === 'Driver') {
-      query = `
+      const [drivers] = await pool.query(`
         SELECT 
-          d.DriverID as id,
-          d.Fname,
-          d.Lname,
-          d.Email,
-          d.PhoneNumber,
+          DriverID as id,
+          Fname,
+          Lname,
+          Email,
+          PhoneNumber,
           'Driver' as UserType,
-          d.Status
-        FROM driver d
-      `;
+          Status
+        FROM driver
+        ORDER BY Fname
+      `);
+      rows = drivers;
       
-      if (status) {
-        query += ` WHERE d.Status = '${status}'`;
-      }
     } else if (userType === 'Passenger') {
-      // Already set above
-    } else {
-      // Get both
-      query = `
+      const [passengers] = await pool.query(`
         SELECT 
-          u.UserID as id,
-          u.Fname,
-          u.Lname,
-          u.Email,
-          u.PhoneNumber,
-          'Passenger' as UserType,
-          'Active' as Status
-        FROM user u
-        UNION ALL
-        SELECT 
-          d.DriverID as id,
-          d.Fname,
-          d.Lname,
-          d.Email,
-          d.PhoneNumber,
-          'Driver' as UserType,
-          d.Status
-        FROM driver d
-      `;
+          UserID as id,
+          Fname,
+          Lname,
+          Email,
+          PhoneNumber,
+          'Passenger' as UserType
+        FROM user
+        ORDER BY Fname
+      `);
+      rows = passengers;
       
-      if (status) {
-        query = `
-          SELECT * FROM (${query}) combined
-          WHERE Status = '${status}'
-        `;
-      }
+    } else if (userType === 'Admin') {
+      const [admins] = await pool.query(`
+        SELECT 
+          AdminID as id,
+          Username as Fname,
+          '' as Lname,
+          Email,
+          '' as PhoneNumber,
+          'Admin' as UserType
+        FROM admin
+        ORDER BY Username
+      `);
+      rows = admins;
+      
+    } else {
+      // All: Combine passengers + drivers + admins
+      const [passengers] = await pool.query(`
+        SELECT 
+          UserID as id,
+          Fname,
+          Lname,
+          Email,
+          PhoneNumber,
+          'Passenger' as UserType
+        FROM user
+      `);
+      const [drivers] = await pool.query(`
+        SELECT 
+          DriverID as id,
+          Fname,
+          Lname,
+          Email,
+          PhoneNumber,
+          'Driver' as UserType,
+          Status
+        FROM driver
+      `);
+      const [admins] = await pool.query(`
+        SELECT 
+          AdminID as id,
+          Username as Fname,
+          '' as Lname,
+          Email,
+          '' as PhoneNumber,
+          'Admin' as UserType
+        FROM admin
+      `);
+      
+      rows = [...passengers, ...drivers, ...admins];
+      rows.sort((a, b) => a.UserType.localeCompare(b.UserType) || a.Fname.localeCompare(b.Fname));
     }
-    
-    query += ' ORDER BY UserType, Fname';
-    
-    const [rows] = await pool.query(query);
     
     res.json({
       success: true,
@@ -389,35 +405,42 @@ app.get('/api/admin/users/passenger/:id', requireAuth, async (req, res) => {
       'SELECT UserID, Fname, Lname, Email, PhoneNumber FROM user WHERE UserID = ?',
       [req.params.id]
     );
-    
+
     if (rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Passenger not found'
       });
     }
-    
+
+    // Return passenger data (NO Status field)
     res.json({
       success: true,
-      user: rows[0]
+      user: {
+        UserID: rows[0].UserID,
+        Fname: rows[0].Fname,
+        Lname: rows[0].Lname,
+        Email: rows[0].Email || '',
+        PhoneNumber: rows[0].PhoneNumber
+      }
     });
   } catch (error) {
     console.error('Error fetching passenger details:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch passenger details',
-      error: error.message
+      message: 'Server error'
     });
   }
 });
 
+
 // Update driver
+// Update driver — ALLOW Status change
 app.put('/api/admin/users/driver/:id', requireAuth, async (req, res) => {
   try {
-    const { Fname, Lname, Email, PhoneNumber, Password, PlateNumber, Model, Color, Capacity } = req.body;
+    const { Fname, Lname, Email, PhoneNumber, Password, Status, PlateNumber, Model, Color, Capacity } = req.body;
     const driverId = req.params.id;
     
-    // Update driver info
     let updateDriverQuery = `
       UPDATE driver 
       SET Fname = ?, Lname = ?, Email = ?, PhoneNumber = ?
@@ -429,21 +452,28 @@ app.put('/api/admin/users/driver/:id', requireAuth, async (req, res) => {
       driverParams.push(Password);
     }
     
+    if (Status && ['Active', 'Suspended', 'Inactive', 'Pending', 'Declined'].includes(Status)) {
+      updateDriverQuery += ', Status = ?';
+      driverParams.push(Status);
+    }
+    
     updateDriverQuery += ' WHERE DriverID = ?';
     driverParams.push(driverId);
     
     await pool.query(updateDriverQuery, driverParams);
     
     // Update vehicle if provided
-    if (PlateNumber && Model && Color && Capacity) {
+    if (PlateNumber || Model || Color || Capacity) {
       const [driver] = await pool.query('SELECT VehicleID FROM driver WHERE DriverID = ?', [driverId]);
-      
       if (driver[0].VehicleID) {
         await pool.query(`
           UPDATE vehicle 
-          SET PlateNumber = ?, Model = ?, Color = ?, Capacity = ?
+          SET PlateNumber = COALESCE(?, PlateNumber),
+              Model = COALESCE(?, Model),
+              Color = COALESCE(?, Color),
+              Capacity = COALESCE(?, Capacity)
           WHERE VehicleID = ?
-        `, [PlateNumber, Model, Color, Capacity, driver[0].VehicleID]);
+        `, [PlateNumber || null, Model || null, Color || null, Capacity || null, driver[0].VehicleID]);
       }
     }
     
@@ -464,7 +494,7 @@ app.put('/api/admin/users/driver/:id', requireAuth, async (req, res) => {
 // Update passenger
 app.put('/api/admin/users/passenger/:id', requireAuth, async (req, res) => {
   try {
-    const { Fname, Lname, Email, PhoneNumber, Password } = req.body;
+    const { Fname, Lname, Email, PhoneNumber, Password, Status } = req.body;
     const userId = req.params.id;
     
     let updateQuery = `
@@ -476,6 +506,11 @@ app.put('/api/admin/users/passenger/:id', requireAuth, async (req, res) => {
     if (Password) {
       updateQuery += ', Password = ?';
       params.push(Password);
+    }
+    
+    if (Status) {
+      updateQuery += ', Status = ?';
+      params.push(Status);
     }
     
     updateQuery += ' WHERE UserID = ?';
