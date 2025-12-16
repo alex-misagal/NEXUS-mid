@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RideKada - Driver Registration</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .register-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .register-box {
+      background: #e6eef5;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .register-box h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #111a20;
+    }
+
+    .form-section {
+      margin-bottom: 30px;
+    }
+
+    .form-section h3 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #0077ff;
+      border-bottom: 2px solid #0077ff;
+      padding-bottom: 8px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #333;
+    }
+
+    .form-group input,
+    .form-group select {
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #0077ff;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+    }
+
+    .btn-register,
+    .btn-back {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-register {
+      background: #0077ff;
+      color: white;
+    }
+
+    .btn-register:hover {
+      background: #005edc;
+    }
+
+    .btn-back {
+      background: #666;
+      color: white;
+    }
+
+    .btn-back:hover {
+      background: #555;
+    }
+
+    #registerMessage {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 5px;
+      text-align: center;
+      display: none;
+    }
+
+    #registerMessage.error {
+      background: #fee;
+      color: #c33;
+      display: block;
+    }
+
+    #registerMessage.success {
+      background: #efe;
+      color: #3c3;
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="video-background">
+    <video autoplay muted loop playsinline>
+      <source src="media/mirror.mp4" type="video/mp4">
+      <div class="video-placeholder">🎥</div>
+    </video>
+  </div>
+
+  <div class="container">
+    <div class="register-container">
+      <div class="register-box">
+        <img src="media/logo.png" class="logo" alt="RideKada Logo">
+        <h2>Driver Registration</h2>
+
+        <form id="driverRegisterForm">
+          <!-- Personal Information -->
+          <div class="form-section">
+            <h3>Personal Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>First Name *</label>
+                <input type="text" id="fname" required>
+              </div>
+              <div class="form-group">
+                <label>Last Name *</label>
+                <input type="text" id="lname" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Email *</label>
+                <input type="email" id="email" required>
+              </div>
+              <div class="form-group">
+                <label>Phone Number *</label>
+                <input type="tel" id="phone" placeholder="09XXXXXXXXX" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label>Password *</label>
+                <input type="password" id="password" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label>Destination (Where you usually drive to) *</label>
+                <input type="text" id="destination" placeholder="e.g., Session Road, Baguio City" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vehicle Information -->
+          <div class="form-section">
+            <h3>Vehicle Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Plate Number *</label>
+                <input type="text" id="plateNumber" placeholder="ABC1234" required>
+              </div>
+              <div class="form-group">
+                <label>Vehicle Model *</label>
+                <input type="text" id="model" placeholder="e.g., Toyota Vios" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Color *</label>
+                <input type="text" id="color" placeholder="e.g., Red" required>
+              </div>
+              <div class="form-group">
+                <label>Capacity (Seats) *</label>
+                <input type="number" id="capacity" min="1" max="15" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button type="button" class="btn-back" onclick="window.location.href='index.html'">Back to Login</button>
+            <button type="submit" class="btn-register">Register</button>
+          </div>
+
+          <p id="registerMessage"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('driverRegisterForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const msg = document.getElementById('registerMessage');
+      msg.style.display = 'none';
+      
+      const data = {
+        Fname: document.getElementById('fname').value.trim(),
+        Lname: document.getElementById('lname').value.trim(),
+        Email: document.getElementById('email').value.trim(),
+        Password: document.getElementById('password').value,
+        PhoneNumber: document.getElementById('phone').value.trim(),
+        Destination: document.getElementById('destination').value.trim(),
+        PlateNumber: document.getElementById('plateNumber').value.trim(),
+        Model: document.getElementById('model').value.trim(),
+        Color: document.getElementById('color').value.trim(),
+        Capacity: parseInt(document.getElementById('capacity').value)
+      };
+
+      // Validate all fields
+      if (!data.Fname || !data.Lname || !data.Email || !data.Password || 
+          !data.PhoneNumber || !data.Destination || !data.PlateNumber || 
+          !data.Model || !data.Color || !data.Capacity) {
+        msg.className = 'error';
+        msg.textContent = 'Please fill in all required fields.';
+        msg.style.display = 'block';
+        return;
+      }
+
+      msg.textContent = 'Submitting registration...';
+      msg.style.display = 'block';
+      msg.className = '';
+
+      try {
+        const response = await fetch('php/register_driver.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await response.text();
+          console.error('Server returned HTML instead of JSON:', text);
+          msg.className = 'error';
+          msg.textContent = 'Server error: PHP file may not exist or has syntax errors. Check console for details.';
+          msg.style.display = 'block';
+          return;
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          msg.className = 'success';
+          msg.textContent = 'Registration successful! Your account is pending admin approval. You will be notified once approved.';
+          document.getElementById('driverRegisterForm').reset();
+          
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 3000);
+        } else {
+          msg.className = 'error';
+          msg.textContent = result.message || 'Registration failed.';
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        msg.className = 'error';
+        msg.textContent = 'Server error. Please check that php/register_driver.php exists and is working correctly.';
+      }
+    });
+  </script>
+</body>
+</html>
