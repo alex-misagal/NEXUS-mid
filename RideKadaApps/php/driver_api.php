@@ -23,6 +23,9 @@ switch ($action) {
     case 'cancelRide':
         cancelRide($conn);
         break;
+    case 'completeRide':
+        completeRide($conn);
+        break;
     case 'getPassengers':
         getPassengers($conn);
         break;
@@ -263,14 +266,16 @@ function getRides($conn) {
                 pr.Status,
                 pr.Notes,
                 pr.CreatedAt,
-                (SELECT COUNT(*) FROM ride_bookings WHERE PublishedRideID = pr.PublishedRideID AND BookingStatus IN ('Confirmed', 'Pending')) as TotalBookings,
-                (SELECT SUM(SeatsBooked) FROM ride_bookings WHERE PublishedRideID = pr.PublishedRideID AND BookingStatus = 'Confirmed') as BookedSeats
+                (SELECT COUNT(*) FROM ride_bookings WHERE PublishedRideID = pr.PublishedRideID AND BookingStatus IN ('Confirmed', 'Pending', 'Completed')) as TotalBookings,
+                (SELECT COUNT(*) FROM ride_bookings WHERE PublishedRideID = pr.PublishedRideID AND BookingStatus IN ('Confirmed', 'Completed')) as ConfirmedBookings,
+                (SELECT SUM(SeatsBooked) FROM ride_bookings WHERE PublishedRideID = pr.PublishedRideID AND BookingStatus IN ('Confirmed', 'Completed')) as BookedSeats,
+                (SELECT COUNT(*) FROM ride_bookings WHERE PublishedRideID = pr.PublishedRideID AND BookingStatus IN ('Confirmed', 'Completed') AND PaymentStatus = 'Paid') as PaidBookings
               FROM published_rides pr
               WHERE pr.DriverID = ?";
     
     // Add filter conditions
     if ($filter === 'upcoming') {
-        $query .= " AND pr.Status = 'Available' AND CONCAT(pr.RideDate, ' ', pr.RideTime) > NOW()";
+        $query .= " AND pr.Status IN ('Available', 'Full')";
     } elseif ($filter === 'completed') {
         $query .= " AND pr.Status = 'Completed'";
     } elseif ($filter === 'cancelled') {
@@ -291,6 +296,11 @@ function getRides($conn) {
         // Calculate total capacity
         $totalCapacity = intval($row['AvailableSeats']) + intval($row['BookedSeats'] ?? 0);
         $row['TotalSeats'] = $totalCapacity;
+        // Check if all confirmed bookings are paid
+        $confirmedBookings = intval($row['ConfirmedBookings']);
+        $paidBookings = intval($row['PaidBookings']);
+        $row['AllBookingsPaid'] = ($confirmedBookings > 0 && $paidBookings === $confirmedBookings);
+        $row['CanComplete'] = $row['AllBookingsPaid'];
         $rides[] = $row;
     }
     
@@ -337,6 +347,61 @@ function cancelRide($conn) {
     } catch (Exception $e) {
         $conn->rollback();
         echo json_encode(['success' => false, 'message' => 'Failed to cancel ride: ' . $e->getMessage()]);
+    }
+}
+
+// NEW FUNCTION: Complete a ride
+function completeRide($conn) {
+    $rideId = intval($_POST['rideId'] ?? 0);
+    
+    if ($rideId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Invalid ride ID']);
+        return;
+    }
+    
+    $conn->begin_transaction();
+    
+    try {
+        // Check if all confirmed bookings have been paid
+        $checkPaymentQuery = "SELECT COUNT(*) as total,
+                                    SUM(CASE WHEN PaymentStatus = 'Paid' THEN 1 ELSE 0 END) as paid
+                             FROM ride_bookings 
+                             WHERE PublishedRideID = ? AND BookingStatus = 'Confirmed'";
+        $stmt = $conn->prepare($checkPaymentQuery);
+        $stmt->bind_param("i", $rideId);
+        $stmt->execute();
+        $paymentCheck = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        
+        if ($paymentCheck['total'] > 0 && $paymentCheck['paid'] < $paymentCheck['total']) {
+            throw new Exception('Cannot complete ride: Some bookings have not been paid yet');
+        }
+        
+        // Update ride status to Completed
+        $updateRideQuery = "UPDATE published_rides 
+                           SET Status = 'Completed' 
+                           WHERE PublishedRideID = ?";
+        $stmt = $conn->prepare($updateRideQuery);
+        $stmt->bind_param("i", $rideId);
+        $stmt->execute();
+        $stmt->close();
+        
+        // Update all confirmed bookings to Completed
+        $updateBookingsQuery = "UPDATE ride_bookings 
+                               SET BookingStatus = 'Completed' 
+                               WHERE PublishedRideID = ? 
+                               AND BookingStatus = 'Confirmed'";
+        $stmtBookings = $conn->prepare($updateBookingsQuery);
+        $stmtBookings->bind_param("i", $rideId);
+        $stmtBookings->execute();
+        $stmtBookings->close();
+        
+        $conn->commit();
+        echo json_encode(['success' => true, 'message' => 'Ride marked as completed successfully']);
+        
+    } catch (Exception $e) {
+        $conn->rollback();
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
 }
 

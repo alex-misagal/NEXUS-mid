@@ -1,4 +1,4 @@
-// Driver Dashboard JavaScript
+// Driver Dashboard JavaScript - UPDATED with Complete Ride functionality
 
 let currentDriver = null;
 let currentBookingFilter = 'pending';
@@ -331,7 +331,7 @@ async function handleBookingAction(bookingId, action) {
   }
 }
 
-// Load rides
+// Load rides - UPDATED with Complete button
 async function loadRides(filter = 'upcoming') {
   try {
     const response = await fetch(`php/driver_api.php?action=getRides&driverId=${currentDriver.DriverID}&filter=${filter}`);
@@ -340,7 +340,12 @@ async function loadRides(filter = 'upcoming') {
     const container = document.getElementById('ridesList');
     
     if (data.success && data.rides.length > 0) {
-      container.innerHTML = data.rides.map(ride => `
+      container.innerHTML = data.rides.map(ride => {
+        // Determine if ride can be completed (only for upcoming rides with all payments)
+        const isUpcoming = ride.Status === 'Available' || ride.Status === 'Full';
+        const canComplete = isUpcoming && ride.CanComplete;
+        
+        return `
         <div class="ride-card">
           <div class="ride-header">
             <div class="ride-title">${ride.FromLocation} → ${ride.Destination}</div>
@@ -353,7 +358,7 @@ async function loadRides(filter = 'upcoming') {
               <div class="info-value">${new Date(ride.DateTime).toLocaleString()}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Fare</div>
+              <div class="info-label">Fare per Seat</div>
               <div class="info-value">₱${parseFloat(ride.Fare).toLocaleString()}</div>
             </div>
             <div class="info-item">
@@ -361,30 +366,82 @@ async function loadRides(filter = 'upcoming') {
               <div class="info-value">${ride.AvailableSeats} / ${ride.TotalSeats}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Booked</div>
+              <div class="info-label">Booked Passengers</div>
               <div class="info-value">${ride.TotalSeats - ride.AvailableSeats} passenger(s)</div>
             </div>
           </div>
           
-          ${ride.Notes ? `<div class="ride-notes"><strong>Notes:</strong> ${ride.Notes}</div>` : ''}
+          ${ride.Notes ? `<div class="ride-notes" style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-top: 15px; font-size: 14px;"><strong>Notes:</strong> ${ride.Notes}</div>` : ''}
+          
+          ${canComplete ? `
+            <div class="payment-notice" style="background: #d4edda; border-left: 4px solid #2ecc71; padding: 15px; border-radius: 8px; margin-top: 15px;">
+              <p style="margin: 0; color: #155724; font-size: 14px;">
+                ✅ <strong>All bookings have been paid.</strong> You can mark this ride as completed.
+              </p>
+            </div>
+          ` : ''}
+          
+          ${ride.Status === 'Completed' ? `
+            <div class="payment-notice" style="background: #d1ecf1; border-left: 4px solid #0c5460; padding: 15px; border-radius: 8px; margin-top: 15px;">
+              <p style="margin: 0; color: #0c5460; font-size: 14px;">
+                ✓ <strong>Ride Completed</strong> - This ride has been successfully completed.
+              </p>
+            </div>
+          ` : ''}
           
           <div class="ride-actions">
             <button class="btn-action btn-view" onclick="viewRideDetails(${ride.RideID})">View Details</button>
-            ${ride.Status === 'Upcoming' ? `
+            
+            ${isUpcoming ? `
+              ${canComplete ? `
+                <button class="btn-action" style="background: #2ecc71; color: white;" onclick="completeRide(${ride.RideID})">✅ Mark as Completed</button>
+              ` : ''}
               <button class="btn-action btn-cancel" onclick="cancelRide(${ride.RideID})">Cancel Ride</button>
             ` : ''}
+            
             ${ride.Status === 'Completed' && !ride.PassengerRated ? `
-              <button class="btn-action btn-rate" onclick="ratePassenger(${ride.RideID})">Rate Passenger</button>
+              <button class="btn-action btn-rate" onclick="ratePassenger(${ride.RideID})">Rate Passengers</button>
             ` : ''}
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     } else {
-      container.innerHTML = '<p class="no-data">No rides found</p>';
+      const filterName = filter === 'upcoming' ? 'upcoming' : filter === 'completed' ? 'completed' : 'cancelled';
+      container.innerHTML = `<p class="no-data">No ${filterName} rides found</p>`;
     }
   } catch (error) {
     console.error('Error loading rides:', error);
     document.getElementById('ridesList').innerHTML = '<p class="no-data">Error loading rides</p>';
+  }
+}
+
+// NEW FUNCTION: Complete ride
+async function completeRide(rideId) {
+  if (!confirm('Mark this ride as completed? This action cannot be undone.')) return;
+  
+  try {
+    const formData = new FormData();
+    formData.append('action', 'completeRide');
+    formData.append('rideId', rideId);
+    
+    const response = await fetch('php/driver_api.php', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      alert('Ride marked as completed successfully! All confirmed bookings have been updated to completed status.');
+      loadRides(currentRideFilter);
+      loadDashboardStats();
+    } else {
+      alert('Failed to complete ride: ' + data.message);
+    }
+  } catch (error) {
+    console.error('Error completing ride:', error);
+    alert('Failed to complete ride');
   }
 }
 
@@ -639,48 +696,5 @@ function handleLogout() {
   if (confirm('Are you sure you want to logout?')) {
     sessionStorage.removeItem('user');
     window.location.href = 'index.html';
-  }
-}
-async function handlePublishRide(e) {
-  e.preventDefault();
-  
-  const formData = new FormData(e.target);
-  const data = {
-    driverId: currentDriver.DriverID,
-    destination: formData.get('destination'),
-    rideDate: formData.get('rideDate'),
-    rideTime: formData.get('rideTime'),
-    availableSeats: parseInt(formData.get('availableSeats')),
-    pricePerSeat: parseFloat(formData.get('fare')),
-    notes: formData.get('notes') || ''
-  };
-  
-  try {
-    const response = await fetch('php/publish_ride.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    });
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      alert('Ride published successfully!');
-      e.target.reset();
-      
-      // Set date to today
-      const dateInput = e.target.querySelector('[name="rideDate"]');
-      dateInput.value = new Date().toISOString().split('T')[0];
-      
-      switchView('rides');
-      loadDashboardStats();
-    } else {
-      alert('Failed to publish ride: ' + result.message);
-    }
-  } catch (error) {
-    console.error('Error publishing ride:', error);
-    alert('Failed to publish ride. Please check console for details.');
   }
 }
