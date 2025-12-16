@@ -643,6 +643,73 @@
     color: #999;
     font-style: italic;
   }
+
+  /* ===== TAB NAVIGATION ===== */
+  .tab-navigation {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #e0e0e0;
+  }
+
+  .tab-btn {
+    padding: 12px 24px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    color: #666;
+    transition: all 0.3s;
+  }
+
+  .tab-btn:hover {
+    color: #3498db;
+    background: #f8f9fa;
+  }
+
+  .tab-btn.active {
+    color: #3498db;
+    border-bottom-color: #3498db;
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  /* Status badges */
+  .status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+  }
+
+  .status-badge.completed {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .status-badge.pending {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .status-badge.cancelled {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  .status-badge.active {
+    background: #d1ecf1;
+    color: #0c5460;
+  }
   
   /* ===== MODALS ===== */
   .modal {
@@ -852,6 +919,7 @@
       gap: 15px;
     }
   }
+
 /* Dashboard Charts Section */
 .dashboard-charts {
   display: grid;

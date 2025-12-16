@@ -1,4 +1,4 @@
-login-<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -11,7 +11,7 @@ login-<!DOCTYPE html>
   <div class="sidebar">
     <div class="sidebar-header">
       <div class="logo-circle">
-        <img src="assets\logo.png" alt=" RideKada Logo">
+        <img src="assets/logo.png" alt="RideKada Logo">
       </div>
       <span class="app-name">RideKada</span>
     </div>
@@ -38,6 +38,11 @@ login-<!DOCTYPE html>
       <a href="#" class="nav-item" data-page="reports">
         <span class="nav-icon">📋</span>
         <span class="nav-text">Reports</span>
+      </a>
+
+      <a href="#" class="nav-item" data-page="transactions">
+        <span class="nav-icon">💳</span>
+        <span class="nav-text">Transaction History</span>
       </a>
 
       <a href="#" class="nav-item" id="logoutBtn">
@@ -106,36 +111,36 @@ login-<!DOCTYPE html>
             <div class="stat-label">Total Expenses</div>
           </div>
         </div>
-       <!-- Dashboard Charts -->
-<div class="dashboard-charts">
-  <!-- Users Distribution -->
-  <div class="chart-card small">
-    <div class="chart-header">
-      <h3>Users Distribution</h3>
-      <span class="chart-sub">Drivers vs Passengers</span>
-    </div>
-    <canvas id="usersChart"></canvas>
-  </div>
 
-  <!-- Earnings Over Time -->
-  <div class="chart-card">
-    <div class="chart-header">
-      <h3>Earnings Over Time</h3>
-      <span class="chart-sub">Monthly earnings summary</span>
-    </div>
-    <canvas id="earningsChart"></canvas>
-  </div>
+        <!-- Dashboard Charts -->
+        <div class="dashboard-charts">
+          <!-- Users Distribution -->
+          <div class="chart-card small">
+            <div class="chart-header">
+              <h3>Users Distribution</h3>
+              <span class="chart-sub">Drivers vs Passengers</span>
+            </div>
+            <canvas id="usersChart"></canvas>
+          </div>
 
-  <!-- Montly Earnings -->
-  <div class="chart-card">
-    <div class="chart-header">
-      <h3>Monthly Earnings</h3>
-      <span class="chart-sub">Completed ride payments</span>
-    </div>
-    <canvas id="dailyEarningsChart"></canvas>
-  </div>
-</div>
+          <!-- Earnings Over Time -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Earnings Over Time</h3>
+              <span class="chart-sub">Monthly earnings summary</span>
+            </div>
+            <canvas id="earningsChart"></canvas>
+          </div>
 
+          <!-- Monthly Earnings -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Monthly Earnings</h3>
+              <span class="chart-sub">Completed ride payments</span>
+            </div>
+            <canvas id="dailyEarningsChart"></canvas>
+          </div>
+        </div>
 
         <!-- Logs & Announcements -->
         <div class="logs-announcements">
@@ -164,8 +169,6 @@ login-<!DOCTYPE html>
           </div>
         </div>
       </div>
-</div>
-      
 
       <!-- Manage Users - Full List View -->
       <div id="fullListView" class="view">
@@ -272,6 +275,106 @@ login-<!DOCTYPE html>
           <!-- Populated by JS -->
         </div>
       </div>
+
+      <!-- Transaction History View -->
+      <div id="transactionsView" class="view">
+        <div class="page-header">
+          <h2>Transaction History</h2>
+          <input type="text" id="searchTransactions" class="search-input" placeholder="Search transactions...">
+        </div>
+
+        <!-- Transaction Stats -->
+        <div class="stats-grid" style="margin-bottom: 30px;">
+          <div class="stat-card green">
+            <div class="stat-icon">💰</div>
+            <div class="stat-number" id="totalTransactions">0</div>
+            <div class="stat-label">Total Transactions</div>
+          </div>
+
+          <div class="stat-card blue">
+            <div class="stat-icon">💳</div>
+            <div class="stat-number" id="completedPayments">₱0</div>
+            <div class="stat-label">Total Completed Payments</div>
+          </div>
+
+          <div class="stat-card orange">
+            <div class="stat-icon">🚗</div>
+            <div class="stat-number" id="totalRides">0</div>
+            <div class="stat-label">Total Rides</div>
+          </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+          <button class="tab-btn active" data-tab="payments">💳 Payments</button>
+          <button class="tab-btn" data-tab="rides">🚗 Rides</button>
+        </div>
+
+        <!-- Payments Tab -->
+        <div id="paymentsTab" class="tab-content active">
+          <div class="section-card">
+            <h3>💳 Payment Transactions</h3>
+            
+            <div class="filter-buttons">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="GCash">GCash</button>
+              <button class="filter-btn" data-filter="Cash">Cash</button>
+              <button class="filter-btn" data-filter="Maya">Maya</button>
+            </div>
+
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Payment ID</th>
+                    <th>Booking ID</th>
+                    <th>Amount</th>
+                    <th>Payment Method</th>
+                    <th>Payment Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="paymentsTableBody">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rides Tab -->
+        <div id="ridesTab" class="tab-content">
+          <div class="section-card">
+            <h3>🚗 Ride History</h3>
+            
+            <div class="filter-buttons">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="Completed">Completed</button>
+              <button class="filter-btn" data-filter="Cancelled">Cancelled</button>
+            </div>
+
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Ride ID</th>
+                    <th>Driver</th>
+                    <th>Passenger</th>
+                    <th>Date & Time</th>
+                    <th>Fare</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="ridesTableBody">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -312,6 +415,28 @@ login-<!DOCTYPE html>
       <div class="modal-buttons">
         <button class="btn-decline" id="declineBtn">Decline</button>
         <button class="btn-accept" id="acceptBtn">Accept</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transaction Detail Modal -->
+  <div id="transactionModal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeTransactionModal()">×</button>
+      <h2>Transaction Details</h2>
+      <div class="modal-body" id="transactionModalContent">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Ride Detail Modal -->
+  <div id="rideModal" class="modal">
+    <div class="modal-content large">
+      <button class="modal-close" onclick="closeRideModal()">×</button>
+      <h2>Ride Details</h2>
+      <div class="modal-body" id="rideModalContent">
+        <!-- Populated by JS -->
       </div>
     </div>
   </div>

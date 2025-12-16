@@ -33,6 +33,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   
   // Set up search
   document.getElementById('searchUsers')?.addEventListener('input', handleSearch);
+  document.getElementById('searchTransactions')?.addEventListener('input', handleTransactionSearch);
+  
+  // Set up tab navigation
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', handleTabSwitch);
+  });
 });
 
 // Check if user is authenticated
@@ -109,7 +115,8 @@ function showView(viewName) {
     'new-users': 'newUsersView',
     'user-status': 'userStatusView',
     'update-user': 'fullListView',
-    'reports': 'reportsView'
+    'reports': 'reportsView',
+    'transactions': 'transactionsView'
   };
   
   const viewId = viewMap[viewName];
@@ -131,6 +138,11 @@ function showView(viewName) {
         break;
       case 'reports':
         loadReports();
+        break;
+      case 'transactions':
+        loadTransactionStats();
+        loadPayments();
+        loadRides();
         break;
     }
   }
@@ -258,20 +270,19 @@ async function loadUsers(filter = 'all') {
       const table = document.querySelector('.data-table');
       const headerRow = table.querySelector('thead tr');
       
-      // After fetching data
-const isPassengerOnly = filter === 'passenger';
-const isAdminOnly = filter === 'admin';
+      const isPassengerOnly = filter === 'passenger';
+      const isAdminOnly = filter === 'admin';
 
-// Hide Status header
-const statusHeader = headerRow.cells[5];
-if (statusHeader) {
-  statusHeader.style.display = (isPassengerOnly || isAdminOnly) ? 'none' : '';
-}
+      // Hide Status header
+      const statusHeader = headerRow.cells[5];
+      if (statusHeader) {
+        statusHeader.style.display = (isPassengerOnly || isAdminOnly) ? 'none' : '';
+      }
 
-// Hide Status cells
-document.querySelectorAll('#usersTableBody td:nth-child(6)').forEach(cell => {
-  cell.style.display = (isPassengerOnly || isAdminOnly) ? 'none' : '';
-});
+      // Hide Status cells
+      document.querySelectorAll('#usersTableBody td:nth-child(6)').forEach(cell => {
+        cell.style.display = (isPassengerOnly || isAdminOnly) ? 'none' : '';
+      });
       
       if (data.users.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px;">No users found</td></tr>';
@@ -279,32 +290,30 @@ document.querySelectorAll('#usersTableBody td:nth-child(6)').forEach(cell => {
       }
       
       tbody.innerHTML = data.users.map(user => `
-  <tr>
-    <td>${user.id}</td>
-    <td>
-      ${user.UserType === 'Admin' ? `<strong>${user.Fname}</strong> (Admin)` : `${user.Fname} ${user.Lname}`}
-    </td>
-    <td>${user.Email || 'N/A'}</td>
-    <td><strong>${user.UserType}</strong></td>
-    <td>${user.PhoneNumber || 'N/A'}</td>
-    
-    <!-- Status: Only for Drivers -->
-    <td style="display: ${isPassengerOnly || isAdminOnly ? 'none' : ''}">
-      ${user.UserType === 'Driver' 
-        ? `<span class="status-badge ${user.Status.toLowerCase()}">${user.Status}</span>` 
-        : '-'}
-    </td>
-    
-    <td class="action-buttons">
-      <button class="btn-action btn-view" onclick="viewUser(${user.id}, '${user.UserType}')">👁️ View</button>
-      ${user.UserType !== 'Admin' ? `
-        <button class="btn-action btn-edit" onclick="editUser(${user.id}, '${user.UserType}')">✏️ Edit</button>
-        <button class="btn-action btn-delete" onclick="deleteUser(${user.id}, '${user.UserType}')">🗑️ Delete</button>
-      ` : `
-      `}
-    </td>
-  </tr>
-`).join('');
+        <tr>
+          <td>${user.id}</td>
+          <td>
+            ${user.UserType === 'Admin' ? `<strong>${user.Fname}</strong> (Admin)` : `${user.Fname} ${user.Lname}`}
+          </td>
+          <td>${user.Email || 'N/A'}</td>
+          <td><strong>${user.UserType}</strong></td>
+          <td>${user.PhoneNumber || 'N/A'}</td>
+          
+          <td style="display: ${isPassengerOnly || isAdminOnly ? 'none' : ''}">
+            ${user.UserType === 'Driver' 
+              ? `<span class="status-badge ${user.Status.toLowerCase()}">${user.Status}</span>` 
+              : '-'}
+          </td>
+          
+          <td class="action-buttons">
+            <button class="btn-action btn-view" onclick="viewUser(${user.id}, '${user.UserType}')">👁️ View</button>
+            ${user.UserType !== 'Admin' ? `
+              <button class="btn-action btn-edit" onclick="editUser(${user.id}, '${user.UserType}')">✏️ Edit</button>
+              <button class="btn-action btn-delete" onclick="deleteUser(${user.id}, '${user.UserType}')">🗑️ Delete</button>
+            ` : ''}
+          </td>
+        </tr>
+      `).join('');
     }
   } catch (error) {
     console.error('Error loading users:', error);
@@ -389,7 +398,6 @@ async function viewUser(id, type) {
 }
 
 // Edit user
-// Edit user - FIXED with proper DOM creation
 async function editUser(id, type) {
   currentUserId = id;
   currentUserType = type.toLowerCase();
@@ -405,9 +413,8 @@ async function editUser(id, type) {
     if (data.success) {
       const user = data.user;
       const formContent = document.getElementById('editFormContent');
-      formContent.innerHTML = ''; // Clear any previous fields
+      formContent.innerHTML = '';
 
-      // Helper: Create text/password/number input field
       const createInputField = (labelText, name, value = '', type = 'text', required = false) => {
         const div = document.createElement('div');
         div.className = 'modal-field';
@@ -426,7 +433,6 @@ async function editUser(id, type) {
         return div;
       };
 
-      // Helper: Create select field
       const createSelectField = (labelText, name, options, selectedValue) => {
         const div = document.createElement('div');
         div.className = 'modal-field';
@@ -451,14 +457,12 @@ async function editUser(id, type) {
         return div;
       };
 
-      // Add common fields
       formContent.appendChild(createInputField('First Name', 'Fname', user.Fname, 'text', true));
       formContent.appendChild(createInputField('Last Name', 'Lname', user.Lname, 'text', true));
       formContent.appendChild(createInputField('Email', 'Email', user.Email || '', 'email'));
       formContent.appendChild(createInputField('Phone Number', 'PhoneNumber', user.PhoneNumber, 'tel', true));
       formContent.appendChild(createInputField('Password (leave blank to keep current)', 'Password', '', 'password'));
 
-      // Driver-specific fields
       if (type === 'Driver') {
         const statusOptions = [
           { value: 'Active', label: 'Active' },
@@ -481,10 +485,7 @@ async function editUser(id, type) {
         formContent.appendChild(createInputField('Capacity', 'Capacity', user.Capacity || '', 'number'));
       }
 
-      // Attach submit handler
       document.getElementById('editUserForm').onsubmit = handleEditSubmit;
-
-      // Show modal
       document.getElementById('editModal').classList.add('active');
     }
   } catch (error) {
@@ -518,8 +519,8 @@ async function handleEditSubmit(e) {
     if (result.success) {
       alert('User updated successfully!');
       closeEditModal();
-      loadUsers(); // Reload the list
-      loadDashboardStats(); // Update stats if status changed
+      loadUsers();
+      loadDashboardStats();
       if (currentView === 'new-users') loadNewUsers();
     } else {
       alert('Failed to update user: ' + result.message);
@@ -651,7 +652,6 @@ async function viewPendingUser(id) {
         </div>
       `;
       
-      // Set up accept/decline buttons
       document.getElementById('acceptBtn').onclick = () => acceptDriver(id);
       document.getElementById('declineBtn').onclick = () => declineDriver(id);
       
@@ -754,18 +754,289 @@ async function loadReports() {
   }
 }
 
+// ===== TRANSACTION HISTORY FUNCTIONS =====
+
+// Load transaction stats
+async function loadTransactionStats() {
+  try {
+    const response = await fetch(`${API_URL}/api/admin/transactions/stats`, {
+      credentials: 'include'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      document.getElementById('totalTransactions').textContent = data.stats.totalTransactions;
+      document.getElementById('completedPayments').textContent = `₱${data.stats.completedPayments.toLocaleString()}`;
+      document.getElementById('totalRides').textContent = data.stats.totalRides;
+    }
+  } catch (error) {
+    console.error('Error loading transaction stats:', error);
+  }
+}
+
+// Load payments
+async function loadPayments(filter = 'all') {
+  try {
+    let url = `${API_URL}/api/admin/transactions/payments`;
+    if (filter !== 'all') {
+      url += `?method=${filter}`;
+    }
+    
+    const response = await fetch(url, {
+      credentials: 'include'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      const tbody = document.getElementById('paymentsTableBody');
+      
+      if (data.payments.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px;">No payments found</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = data.payments.map(payment => `
+        <tr>
+          <td>${payment.PaymentID}</td>
+          <td>${payment.BookingID || 'N/A'}</td>
+          <td>₱${parseFloat(payment.Amount).toLocaleString()}</td>
+          <td><span class="status-badge">${payment.PaymentMethod}</span></td>
+          <td>${new Date(payment.PaymentDate).toLocaleString()}</td>
+          <td><span class="status-badge ${payment.Status.toLowerCase()}">${payment.Status}</span></td>
+          <td>
+            <button class="btn-action btn-view" onclick="viewPaymentDetails(${payment.PaymentID})">👁️ View</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+  } catch (error) {
+    console.error('Error loading payments:', error);
+    document.getElementById('paymentsTableBody').innerHTML = 
+      '<tr><td colspan="7" style="text-align:center; padding:40px; color:red;">Error loading payments</td></tr>';
+  }
+}
+
+// Load rides
+async function loadRides(filter = 'all') {
+  try {
+    let url = `${API_URL}/api/admin/transactions/rides`;
+    if (filter !== 'all') {
+      url += `?status=${filter}`;
+    }
+    
+    const response = await fetch(url, {
+      credentials: 'include'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      const tbody = document.getElementById('ridesTableBody');
+      
+      if (data.rides.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px;">No rides found</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = data.rides.map(ride => `
+        <tr>
+          <td>${ride.RideID}</td>
+          <td>${ride.DriverName || 'N/A'}</td>
+          <td>${ride.PassengerName || 'N/A'}</td>
+          <td>${new Date(ride.DateTime).toLocaleString()}</td>
+          <td>₱${parseFloat(ride.Fare).toLocaleString()}</td>
+          <td><span class="status-badge ${ride.Status.toLowerCase()}">${ride.Status}</span></td>
+          <td>
+            <button class="btn-action btn-view" onclick="viewRideDetails(${ride.RideID})">👁️ View</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+  } catch (error) {
+    console.error('Error loading rides:', error);
+    document.getElementById('ridesTableBody').innerHTML = 
+      '<tr><td colspan="7" style="text-align:center; padding:40px; color:red;">Error loading rides</td></tr>';
+  }
+}
+
+// View payment details
+async function viewPaymentDetails(paymentId) {
+  try {
+    const response = await fetch(`${API_URL}/api/admin/transactions/payment/${paymentId}`, {
+      credentials: 'include'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      const payment = data.payment;
+      const modal = document.getElementById('transactionModal');
+      const content = document.getElementById('transactionModalContent');
+      
+      content.innerHTML = `
+        <div class="modal-section">
+          <h3>Payment Information</h3>
+          <div class="modal-field">
+            <label>Payment ID</label>
+            <input type="text" value="${payment.PaymentID}" readonly>
+          </div>
+          <div class="modal-field">
+            <label>Booking ID</label>
+            <input type="text" value="${payment.BookingID || 'N/A'}" readonly>
+          </div>
+          <div class="modal-field">
+            <label>Amount</label>
+            <input type="text" value="₱${parseFloat(payment.Amount).toLocaleString()}" readonly>
+          </div>
+          <div class="modal-field">
+            <label>Payment Method</label>
+            <input type="text" value="${payment.PaymentMethod}" readonly>
+          </div>
+          <div class="modal-field">
+            <label>Payment Date</label>
+            <input type="text" value="${new Date(payment.PaymentDate).toLocaleString()}" readonly>
+          </div>
+          <div class="modal-field">
+            <label>Status</label>
+            <input type="text" value="${payment.Status}" readonly>
+          </div>
+        </div>
+      `;
+      
+      modal.classList.add('active');
+    }
+  } catch (error) {
+    console.error('Error loading payment details:', error);
+    alert('Failed to load payment details');
+  }
+}
+
+// View ride details
+async function viewRideDetails(rideId) {
+  try {
+    const response = await fetch(`${API_URL}/api/admin/transactions/ride/${rideId}`, {
+      credentials: 'include'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      const ride = data.ride;
+      const modal = document.getElementById('rideModal');
+      const content = document.getElementById('rideModalContent');
+      
+      content.innerHTML = `
+        <div class="modal-grid">
+          <div class="modal-section">
+            <h3>Ride Information</h3>
+            <div class="modal-field">
+              <label>Ride ID</label>
+              <input type="text" value="${ride.RideID}" readonly>
+            </div>
+            <div class="modal-field">
+              <label>Date & Time</label>
+              <input type="text" value="${new Date(ride.DateTime).toLocaleString()}" readonly>
+            </div>
+            <div class="modal-field">
+              <label>Fare</label>
+              <input type="text" value="₱${parseFloat(ride.Fare).toLocaleString()}" readonly>
+            </div>
+            <div class="modal-field">
+              <label>Status</label>
+              <input type="text" value="${ride.Status}" readonly>
+            </div>
+          </div>
+          
+          <div class="modal-section">
+            <h3>People Involved</h3>
+            <div class="modal-field">
+              <label>Driver</label>
+              <input type="text" value="${ride.DriverName || 'N/A'}" readonly>
+            </div>
+            <div class="modal-field">
+              <label>Driver Phone</label>
+              <input type="text" value="${ride.DriverPhone || 'N/A'}" readonly>
+            </div>
+            <div class="modal-field">
+              <label>Passenger</label>
+              <input type="text" value="${ride.PassengerName || 'N/A'}" readonly>
+            </div>
+            <div class="modal-field">
+              <label>Passenger Phone</label>
+              <input type="text" value="${ride.PassengerPhone || 'N/A'}" readonly>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      modal.classList.add('active');
+    }
+  } catch (error) {
+    console.error('Error loading ride details:', error);
+    alert('Failed to load ride details');
+  }
+}
+
+// Handle tab switch
+function handleTabSwitch(e) {
+  const tabName = this.dataset.tab;
+  
+  // Update active tab button
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  this.classList.add('active');
+  
+  // Show corresponding tab content
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  
+  if (tabName === 'payments') {
+    document.getElementById('paymentsTab').classList.add('active');
+  } else if (tabName === 'rides') {
+    document.getElementById('ridesTab').classList.add('active');
+  }
+}
+
+// Handle transaction search
+function handleTransactionSearch(e) {
+  const searchTerm = e.target.value.toLowerCase();
+  const activeTab = document.querySelector('.tab-content.active');
+  const rows = activeTab.querySelectorAll('tbody tr');
+  
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(searchTerm) ? '' : 'none';
+  });
+}
+
 // Handle filter
 function handleFilter(e) {
-  // Remove active from all filter buttons
-  document.querySelectorAll('.filter-btn').forEach(btn => {
+  const parentSection = e.target.closest('.view, .tab-content');
+  const buttons = parentSection.querySelectorAll('.filter-btn');
+  
+  buttons.forEach(btn => {
     btn.classList.remove('active');
   });
   
-  // Add active to clicked button
   this.classList.add('active');
   
-  const filter = this.dataset.type;
+  const filter = this.dataset.filter || this.dataset.type;
+  
+  // Determine which view we're in
+  if (currentView === 'transactions') {
+    const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
+    if (activeTab === 'payments') {
+      loadPayments(filter);
+    } else if (activeTab === 'rides') {
+      loadRides(filter);
+    }
+  } else {
     loadUsers(filter);
+  }
 }
 
 // Handle search
@@ -790,6 +1061,14 @@ function closeEditModal() {
 
 function closePendingModal() {
   document.getElementById('pendingUserModal').classList.remove('active');
+}
+
+function closeTransactionModal() {
+  document.getElementById('transactionModal').classList.remove('active');
+}
+
+function closeRideModal() {
+  document.getElementById('rideModal').classList.remove('active');
 }
 
 // Close modals on outside click
@@ -848,7 +1127,7 @@ function renderUsersChart(drivers, passengers) {
 // Load monthly earnings
 async function loadMonthlyEarnings() {
   try {
-    const res = await fetch('/api/admin/earnings/monthly', {
+    const res = await fetch(`${API_URL}/api/admin/earnings/monthly`, {
       credentials: 'include'
     });
 

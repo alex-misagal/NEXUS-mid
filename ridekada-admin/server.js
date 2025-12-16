@@ -24,9 +24,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to true in production with HTTPS
+    secure: false,
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000
   }
 }));
 
@@ -35,10 +35,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Database configuration
 const dbConfig = {
-  host: 'localhost',           // ← Changed from 'mysql' to 'localhost'
-  user: 'root',                // ← Your WAMP MySQL username (usually 'root')
-  password: '',                // ← Your WAMP MySQL password (usually empty)
-  database: 'nexus-mid',       // ← Your database name
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'nexus-mid',
   port: 3306
 };
 
@@ -51,7 +51,6 @@ async function initializeDatabase() {
     const connection = await pool.getConnection();
     console.log('✓ Connected to MySQL database');
     
-    // Create admin table if not exists
     await connection.query(`
       CREATE TABLE IF NOT EXISTS admin (
         AdminID INT PRIMARY KEY AUTO_INCREMENT,
@@ -62,14 +61,12 @@ async function initializeDatabase() {
       )
     `);
     
-    // Ensure driver table has proper Status enum (safe to run multiple times)
     await connection.query(`
       ALTER TABLE driver 
       MODIFY COLUMN Status ENUM('Active', 'Suspended', 'Inactive', 'Pending', 'Declined') 
       DEFAULT 'Pending'
     `);
 
-    // Insert default admin if table is empty
     const [admins] = await connection.query('SELECT COUNT(*) as count FROM admin');
     if (admins[0].count === 0) {
       await connection.query(`
@@ -100,7 +97,6 @@ function requireAuth(req, res, next) {
 
 // ===== AUTHENTICATION ROUTES =====
 
-// Admin Login
 app.post('/api/admin/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -124,7 +120,6 @@ app.post('/api/admin/login', async (req, res) => {
       });
     }
     
-    // Set session
     req.session.adminId = rows[0].AdminID;
     req.session.username = rows[0].Username;
     
@@ -146,7 +141,6 @@ app.post('/api/admin/login', async (req, res) => {
   }
 });
 
-// Admin Logout
 app.post('/api/admin/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -162,7 +156,6 @@ app.post('/api/admin/logout', (req, res) => {
   });
 });
 
-// Check session
 app.get('/api/admin/check-session', (req, res) => {
   if (req.session && req.session.adminId) {
     res.json({
@@ -180,7 +173,6 @@ app.get('/api/admin/check-session', (req, res) => {
 
 // ===== DASHBOARD STATS =====
 
-// Dashboard stats — count only active drivers, all passengers are always counted
 app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
   try {
     const [activeDrivers] = await pool.query(
@@ -224,7 +216,7 @@ app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
     });
   }
 });
-// Monthly Earnings
+
 app.get('/api/admin/earnings/monthly', requireAuth, async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -252,7 +244,6 @@ app.get('/api/admin/earnings/monthly', requireAuth, async (req, res) => {
 
 // ===== USER MANAGEMENT ROUTES =====
 
-// Get all users (drivers, passengers, and admins)
 app.get('/api/admin/users', requireAuth, async (req, res) => {
   try {
     const { userType } = req.query;
@@ -303,7 +294,6 @@ app.get('/api/admin/users', requireAuth, async (req, res) => {
       rows = admins;
       
     } else {
-      // All: Combine passengers + drivers + admins
       const [passengers] = await pool.query(`
         SELECT 
           UserID as id,
@@ -355,7 +345,6 @@ app.get('/api/admin/users', requireAuth, async (req, res) => {
   }
 });
 
-// Get user details (Driver with vehicle)
 app.get('/api/admin/users/driver/:id', requireAuth, async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -398,7 +387,6 @@ app.get('/api/admin/users/driver/:id', requireAuth, async (req, res) => {
   }
 });
 
-// Get passenger details
 app.get('/api/admin/users/passenger/:id', requireAuth, async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -413,7 +401,6 @@ app.get('/api/admin/users/passenger/:id', requireAuth, async (req, res) => {
       });
     }
 
-    // Return passenger data (NO Status field)
     res.json({
       success: true,
       user: {
@@ -433,9 +420,6 @@ app.get('/api/admin/users/passenger/:id', requireAuth, async (req, res) => {
   }
 });
 
-
-// Update driver
-// Update driver — ALLOW Status change
 app.put('/api/admin/users/driver/:id', requireAuth, async (req, res) => {
   try {
     const { Fname, Lname, Email, PhoneNumber, Password, Status, PlateNumber, Model, Color, Capacity } = req.body;
@@ -462,7 +446,6 @@ app.put('/api/admin/users/driver/:id', requireAuth, async (req, res) => {
     
     await pool.query(updateDriverQuery, driverParams);
     
-    // Update vehicle if provided
     if (PlateNumber || Model || Color || Capacity) {
       const [driver] = await pool.query('SELECT VehicleID FROM driver WHERE DriverID = ?', [driverId]);
       if (driver[0].VehicleID) {
@@ -491,10 +474,9 @@ app.put('/api/admin/users/driver/:id', requireAuth, async (req, res) => {
   }
 });
 
-// Update passenger
 app.put('/api/admin/users/passenger/:id', requireAuth, async (req, res) => {
   try {
-    const { Fname, Lname, Email, PhoneNumber, Password, Status } = req.body;
+    const { Fname, Lname, Email, PhoneNumber, Password } = req.body;
     const userId = req.params.id;
     
     let updateQuery = `
@@ -506,11 +488,6 @@ app.put('/api/admin/users/passenger/:id', requireAuth, async (req, res) => {
     if (Password) {
       updateQuery += ', Password = ?';
       params.push(Password);
-    }
-    
-    if (Status) {
-      updateQuery += ', Status = ?';
-      params.push(Status);
     }
     
     updateQuery += ' WHERE UserID = ?';
@@ -532,7 +509,6 @@ app.put('/api/admin/users/passenger/:id', requireAuth, async (req, res) => {
   }
 });
 
-// Delete user
 app.delete('/api/admin/users/:type/:id', requireAuth, async (req, res) => {
   try {
     const { type, id } = req.params;
@@ -561,7 +537,6 @@ app.delete('/api/admin/users/:type/:id', requireAuth, async (req, res) => {
 
 app.get('/api/admin/new-users', requireAuth, async (req, res) => {
   try {
-    // For demo, get recent drivers (you can add a 'Pending' status field later)
     const [rows] = await pool.query(`
       SELECT 
         d.DriverID,
@@ -597,7 +572,6 @@ app.get('/api/admin/new-users', requireAuth, async (req, res) => {
   }
 });
 
-// Accept driver
 app.post('/api/admin/users/accept/:id', requireAuth, async (req, res) => {
   try {
     await pool.query(
@@ -619,7 +593,6 @@ app.post('/api/admin/users/accept/:id', requireAuth, async (req, res) => {
   }
 });
 
-// Decline driver
 app.post('/api/admin/users/decline/:id', requireAuth, async (req, res) => {
   try {
     await pool.query(
@@ -641,12 +614,201 @@ app.post('/api/admin/users/decline/:id', requireAuth, async (req, res) => {
   }
 });
 
-// ===== REPORTS & TRANSACTIONS =====
+// ===== TRANSACTION HISTORY ROUTES =====
 
-// Get user reports
+// Get transaction stats
+app.get('/api/admin/transactions/stats', requireAuth, async (req, res) => {
+  try {
+    const [totalPayments] = await pool.query(
+      'SELECT COUNT(*) as count FROM payment'
+    );
+    
+    const [completedPayments] = await pool.query(
+      "SELECT COALESCE(SUM(Amount), 0) as total FROM payment WHERE Status = 'Completed'"
+    );
+    
+    const [totalRides] = await pool.query(
+      'SELECT COUNT(*) as count FROM ride'
+    );
+    
+    res.json({
+      success: true,
+      stats: {
+        totalTransactions: totalPayments[0].count,
+        completedPayments: parseFloat(completedPayments[0].total),
+        totalRides: totalRides[0].count
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching transaction stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch transaction stats',
+      error: error.message
+    });
+  }
+});
+
+// Get all payments
+app.get('/api/admin/transactions/payments', requireAuth, async (req, res) => {
+  try {
+    const { method } = req.query;
+    
+    let query = `
+      SELECT 
+        PaymentID,
+        BookingID,
+        Amount,
+        PaymentMethod,
+        PaymentDate,
+        Status
+      FROM payment
+    `;
+    
+    const params = [];
+    
+    if (method && method !== 'all') {
+      query += ' WHERE PaymentMethod = ?';
+      params.push(method);
+    }
+    
+    query += ' ORDER BY PaymentDate DESC LIMIT 100';
+    
+    const [rows] = await pool.query(query, params);
+    
+    res.json({
+      success: true,
+      count: rows.length,
+      payments: rows
+    });
+  } catch (error) {
+    console.error('Error fetching payments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch payments',
+      error: error.message
+    });
+  }
+});
+
+// Get all rides
+app.get('/api/admin/transactions/rides', requireAuth, async (req, res) => {
+  try {
+    const { status } = req.query;
+    
+    let query = `
+      SELECT 
+        r.RideID,
+        r.DateTime,
+        r.Fare,
+        r.Status,
+        CONCAT(d.Fname, ' ', d.Lname) as DriverName,
+        d.PhoneNumber as DriverPhone,
+        CONCAT(u.Fname, ' ', u.Lname) as PassengerName,
+        u.PhoneNumber as PassengerPhone
+      FROM ride r
+      LEFT JOIN driver d ON r.DriverID = d.DriverID
+      LEFT JOIN user u ON r.UserID = u.UserID
+    `;
+    
+    const params = [];
+    
+    if (status && status !== 'all') {
+      query += ' WHERE r.Status = ?';
+      params.push(status);
+    }
+    
+    query += ' ORDER BY r.DateTime DESC LIMIT 100';
+    
+    const [rows] = await pool.query(query, params);
+    
+    res.json({
+      success: true,
+      count: rows.length,
+      rides: rows
+    });
+  } catch (error) {
+    console.error('Error fetching rides:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch rides',
+      error: error.message
+    });
+  }
+});
+
+// Get payment details
+app.get('/api/admin/transactions/payment/:id', requireAuth, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM payment WHERE PaymentID = ?',
+      [req.params.id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payment not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      payment: rows[0]
+    });
+  } catch (error) {
+    console.error('Error fetching payment details:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch payment details',
+      error: error.message
+    });
+  }
+});
+
+// Get ride details
+app.get('/api/admin/transactions/ride/:id', requireAuth, async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        r.*,
+        CONCAT(d.Fname, ' ', d.Lname) as DriverName,
+        d.PhoneNumber as DriverPhone,
+        d.Email as DriverEmail,
+        CONCAT(u.Fname, ' ', u.Lname) as PassengerName,
+        u.PhoneNumber as PassengerPhone,
+        u.Email as PassengerEmail
+      FROM ride r
+      LEFT JOIN driver d ON r.DriverID = d.DriverID
+      LEFT JOIN user u ON r.UserID = u.UserID
+      WHERE r.RideID = ?
+    `, [req.params.id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Ride not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      ride: rows[0]
+    });
+  } catch (error) {
+    console.error('Error fetching ride details:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch ride details',
+      error: error.message
+    });
+  }
+});
+
+// ===== REPORTS & LOGS =====
+
 app.get('/api/admin/reports/users', requireAuth, async (req, res) => {
   try {
-    // This is a placeholder - you can create a reports table
     const reports = [
       {
         id: 1,
@@ -673,66 +835,20 @@ app.get('/api/admin/reports/users', requireAuth, async (req, res) => {
   }
 });
 
-// Get transactions
-app.get('/api/admin/transactions', requireAuth, async (req, res) => {
-  try {
-    const [rows] = await pool.query(`
-      SELECT 
-        p.PaymentID,
-        p.Amount,
-        p.PaymentMethod,
-        p.PaymentDate,
-        b.BookingID,
-        d.Fname as DriverFname,
-        d.Lname as DriverLname,
-        u.Fname as PassengerFname,
-        u.Lname as PassengerLname
-      FROM payment p
-      LEFT JOIN booking b ON p.BookingID = b.BookingID
-      LEFT JOIN ride r ON b.RideID = r.RideID
-      LEFT JOIN driver d ON r.DriverID = d.DriverID
-      LEFT JOIN user u ON r.UserID = u.UserID
-      WHERE p.Status = 'Completed'
-      ORDER BY p.PaymentDate DESC
-      LIMIT 50
-    `);
-    
-    res.json({
-      success: true,
-      count: rows.length,
-      transactions: rows
-    });
-  } catch (error) {
-    console.error('Error fetching transactions:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch transactions',
-      error: error.message
-    });
-  }
-});
-
-// ===== LOGS & ANNOUNCEMENTS =====
-
 app.get('/api/admin/logs', requireAuth, async (req, res) => {
   try {
-    // Get recent new drivers
     const [newDrivers] = await pool.query(`
       SELECT 
         DriverID as id,
         CONCAT(Fname, ' ', Lname) as name,
         Email,
         PhoneNumber,
-        'New Driver' as type,
-        NULL as vehicleDetails,
-        NULL as licenseplate,
-        NULL as vehicleColor
+        'New Driver' as type
       FROM driver
       ORDER BY DriverID DESC
       LIMIT 5
     `);
     
-    // Get recent new passengers
     const [newPassengers] = await pool.query(`
       SELECT 
         UserID as id,
@@ -762,12 +878,9 @@ app.get('/api/admin/logs', requireAuth, async (req, res) => {
   }
 });
 
-// Post announcement (placeholder)
 app.post('/api/admin/announcement', requireAuth, async (req, res) => {
   try {
     const { message } = req.body;
-    
-    // You can create an announcements table later
     console.log('Announcement:', message);
     
     res.json({
@@ -789,12 +902,10 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Dashboard endpoint
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
