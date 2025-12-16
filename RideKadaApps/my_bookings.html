@@ -189,6 +189,7 @@
       margin-top: 20px;
       padding-top: 20px;
       border-top: 2px solid #f0f0f0;
+      flex-wrap: wrap;
     }
 
     .btn-action {
@@ -234,6 +235,27 @@
 
     .btn-view:hover {
       background: #2980b9;
+    }
+
+    .btn-review {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      color: white;
+    }
+
+    .btn-review:hover {
+      background: linear-gradient(135deg, #e67e22, #d35400);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+    }
+
+    .btn-review.reviewed {
+      background: #95a5a6;
+      cursor: default;
+    }
+
+    .btn-review.reviewed:hover {
+      transform: none;
+      box-shadow: none;
     }
 
     .no-bookings {
@@ -295,6 +317,20 @@
       gap: 10px;
     }
 
+    .review-notice {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+
+    .review-notice p {
+      margin: 0;
+      color: #155724;
+      font-size: 14px;
+    }
+
     .loading {
       text-align: center;
       padding: 60px;
@@ -315,6 +351,241 @@
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
+    }
+
+    /* Review Modal Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .review-modal {
+      background: white;
+      max-width: 500px;
+      width: 90%;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .review-modal-header {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      color: white;
+      padding: 25px;
+      text-align: center;
+    }
+
+    .review-modal-header h2 {
+      margin: 0 0 10px;
+      font-size: 24px;
+    }
+
+    .review-modal-header p {
+      margin: 0;
+      opacity: 0.9;
+      font-size: 14px;
+    }
+
+    .review-modal-body {
+      padding: 30px;
+    }
+
+    .driver-info-card {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .driver-avatar {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 auto 15px;
+    }
+
+    .driver-info-card h3 {
+      margin: 0 0 5px;
+      color: #333;
+      font-size: 18px;
+    }
+
+    .driver-info-card p {
+      margin: 0;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .rating-section {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .rating-section label {
+      display: block;
+      margin-bottom: 15px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .star-rating {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .star-rating .star {
+      font-size: 40px;
+      cursor: pointer;
+      color: #ddd;
+      transition: all 0.2s;
+    }
+
+    .star-rating .star:hover,
+    .star-rating .star.active {
+      color: #f39c12;
+      transform: scale(1.15);
+    }
+
+    .star-rating .star.hovered {
+      color: #f39c12;
+    }
+
+    .comment-section {
+      margin-bottom: 25px;
+    }
+
+    .comment-section label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .comment-section textarea {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 100px;
+      transition: border-color 0.3s;
+    }
+
+    .comment-section textarea:focus {
+      outline: none;
+      border-color: #f39c12;
+    }
+
+    .review-modal-footer {
+      display: flex;
+      gap: 15px;
+      padding: 0 30px 30px;
+    }
+
+    .btn-modal {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-modal-cancel {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .btn-modal-cancel:hover {
+      background: #d0d0d0;
+    }
+
+    .btn-modal-submit {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      color: white;
+    }
+
+    .btn-modal-submit:hover {
+      background: linear-gradient(135deg, #e67e22, #d35400);
+      transform: translateY(-2px);
+    }
+
+    .btn-modal-submit:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Existing review display */
+    .existing-review {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 15px;
+      border-left: 4px solid #f39c12;
+    }
+
+    .existing-review-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .existing-review-stars {
+      color: #f39c12;
+      font-size: 18px;
+    }
+
+    .existing-review-date {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .existing-review-comment {
+      color: #666;
+      font-size: 14px;
+      font-style: italic;
+      margin: 0;
     }
   </style>
 </head>
@@ -375,11 +646,53 @@
     </div>
   </div>
 
+  <!-- Review Modal -->
+  <div class="modal-overlay" id="reviewModal">
+    <div class="review-modal">
+      <div class="review-modal-header">
+        <h2>⭐ Rate Your Ride</h2>
+        <p>Share your experience with this driver</p>
+      </div>
+      
+      <div class="review-modal-body">
+        <div class="driver-info-card">
+          <div class="driver-avatar" id="modalDriverAvatar">D</div>
+          <h3 id="modalDriverName">Driver Name</h3>
+          <p id="modalRideInfo">Route info</p>
+        </div>
+
+        <div class="rating-section">
+          <label>How was your ride?</label>
+          <div class="star-rating" id="starRating">
+            <span class="star" data-rating="1">★</span>
+            <span class="star" data-rating="2">★</span>
+            <span class="star" data-rating="3">★</span>
+            <span class="star" data-rating="4">★</span>
+            <span class="star" data-rating="5">★</span>
+          </div>
+        </div>
+
+        <div class="comment-section">
+          <label>Leave a comment (optional)</label>
+          <textarea id="reviewComment" placeholder="Tell us about your experience with this driver..."></textarea>
+        </div>
+      </div>
+
+      <div class="review-modal-footer">
+        <button class="btn-modal btn-modal-cancel" onclick="closeReviewModal()">Cancel</button>
+        <button class="btn-modal btn-modal-submit" id="submitReviewBtn" onclick="submitReview()">Submit Review</button>
+      </div>
+    </div>
+  </div>
+
   <script src="javascript/home.js"></script>
   <script>
     let allBookings = [];
     let currentFilter = 'all';
     let currentUser = null;
+    let currentReviewData = null;
+    let selectedRating = 0;
+    let reviewStatusCache = {}; // Cache for review status
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
@@ -394,6 +707,7 @@
       loadBookings();
       setupFilterTabs();
       setupProfileDropdown();
+      setupStarRating();
     });
 
     function getStoredUser() {
@@ -450,6 +764,35 @@
       });
     }
 
+    function setupStarRating() {
+      const stars = document.querySelectorAll('#starRating .star');
+      
+      stars.forEach(star => {
+        star.addEventListener('click', function() {
+          selectedRating = parseInt(this.dataset.rating);
+          updateStarDisplay();
+        });
+
+        star.addEventListener('mouseenter', function() {
+          const hoverRating = parseInt(this.dataset.rating);
+          stars.forEach((s, index) => {
+            s.classList.toggle('hovered', index < hoverRating);
+          });
+        });
+
+        star.addEventListener('mouseleave', function() {
+          stars.forEach(s => s.classList.remove('hovered'));
+        });
+      });
+    }
+
+    function updateStarDisplay() {
+      const stars = document.querySelectorAll('#starRating .star');
+      stars.forEach((star, index) => {
+        star.classList.toggle('active', index < selectedRating);
+      });
+    }
+
     async function loadBookings() {
       try {
         const response = await fetch(`php/get_passenger_bookings.php?userId=${currentUser.UserID}`);
@@ -457,6 +800,10 @@
 
         if (data.success) {
           allBookings = data.bookings;
+          
+          // Check review status for completed bookings
+          await checkReviewStatusForCompletedBookings();
+          
           updateBadges(data.counts, data.total);
           displayBookings();
         } else {
@@ -465,6 +812,27 @@
       } catch (error) {
         console.error('Load bookings error:', error);
         showError('Failed to load bookings. Please try again.');
+      }
+    }
+
+    async function checkReviewStatusForCompletedBookings() {
+      const completedBookings = allBookings.filter(b => b.status === 'Completed');
+      
+      for (const booking of completedBookings) {
+        try {
+          const response = await fetch(
+            `php/check_review_exists.php?bookingId=${booking.bookingId}&userId=${currentUser.UserID}`
+          );
+          const data = await response.json();
+          
+          reviewStatusCache[booking.bookingId] = {
+            hasReviewed: data.hasReviewed,
+            review: data.review
+          };
+        } catch (error) {
+          console.error('Error checking review status:', error);
+          reviewStatusCache[booking.bookingId] = { hasReviewed: false, review: null };
+        }
       }
     }
 
@@ -500,7 +868,10 @@
       }
 
       // Display bookings
-      container.innerHTML = filteredBookings.map(booking => `
+      container.innerHTML = filteredBookings.map(booking => {
+        const reviewStatus = reviewStatusCache[booking.bookingId] || { hasReviewed: false, review: null };
+        
+        return `
         <div class="booking-card ${booking.status.toLowerCase()}">
           <div class="booking-header">
             <div class="booking-reference">${booking.referenceNumber}</div>
@@ -555,11 +926,33 @@
             </div>
           ` : ''}
 
+          ${booking.status === 'Completed' && reviewStatus.hasReviewed ? `
+            <div class="existing-review">
+              <div class="existing-review-header">
+                <span class="existing-review-stars">${'★'.repeat(reviewStatus.review.rating)}${'☆'.repeat(5 - reviewStatus.review.rating)}</span>
+                <span class="existing-review-date">Reviewed on ${new Date(reviewStatus.review.reviewDate).toLocaleDateString()}</span>
+              </div>
+              ${reviewStatus.review.comment ? `<p class="existing-review-comment">"${reviewStatus.review.comment}"</p>` : ''}
+            </div>
+          ` : ''}
+
           <div class="booking-actions">
             ${booking.canPay ? `
               <button class="btn-action btn-pay" onclick="proceedToPayment(${booking.bookingId}, '${booking.referenceNumber}', ${booking.totalFare})">
                 💳 Pay Now - ₱${parseFloat(booking.totalFare).toFixed(2)}
               </button>
+            ` : ''}
+            
+            ${booking.status === 'Completed' ? `
+              ${reviewStatus.hasReviewed ? `
+                <button class="btn-action btn-review reviewed" disabled>
+                  ✅ Already Reviewed
+                </button>
+              ` : `
+                <button class="btn-action btn-review" onclick="openReviewModal(${JSON.stringify(booking).replace(/"/g, '&quot;')})">
+                  ⭐ Review Driver
+                </button>
+              `}
             ` : ''}
             
             ${booking.status === 'Pending' || booking.status === 'Confirmed' ? `
@@ -573,7 +966,114 @@
             </button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
+    }
+
+    function openReviewModal(booking) {
+      currentReviewData = booking;
+      selectedRating = 0;
+      updateStarDisplay();
+      document.getElementById('reviewComment').value = '';
+      
+      // Update modal with driver info
+      const driverName = booking.driverDetails.name;
+      document.getElementById('modalDriverAvatar').textContent = driverName.charAt(0).toUpperCase();
+      document.getElementById('modalDriverName').textContent = driverName;
+      document.getElementById('modalRideInfo').textContent = 
+        `${booking.rideDetails.from} → ${booking.rideDetails.destination} • ${booking.rideDetails.rideDateTime}`;
+      
+      document.getElementById('reviewModal').classList.add('active');
+    }
+
+    function closeReviewModal() {
+      document.getElementById('reviewModal').classList.remove('active');
+      currentReviewData = null;
+      selectedRating = 0;
+    }
+
+    async function submitReview() {
+      if (!currentReviewData) {
+        alert('No booking selected for review');
+        return;
+      }
+
+      if (selectedRating === 0) {
+        alert('Please select a rating (1-5 stars)');
+        return;
+      }
+
+      const comment = document.getElementById('reviewComment').value.trim();
+      const submitBtn = document.getElementById('submitReviewBtn');
+      
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      try {
+        const response = await fetch('php/submit_driver_review.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            bookingId: currentReviewData.bookingId,
+            userId: currentUser.UserID,
+            driverId: currentReviewData.driverDetails.driverId,
+            rating: selectedRating,
+            comment: comment
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Update cache
+          reviewStatusCache[currentReviewData.bookingId] = {
+            hasReviewed: true,
+            review: {
+              rating: selectedRating,
+              comment: comment,
+              reviewDate: new Date().toISOString()
+            }
+          };
+          
+          closeReviewModal();
+          showSuccessToast('Thank you for your review!');
+          displayBookings(); // Refresh to show review
+        } else {
+          alert('Failed to submit review: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Submit review error:', error);
+        alert('Failed to submit review. Please try again.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Review';
+      }
+    }
+
+    function showSuccessToast(message) {
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #2ecc71, #27ae60);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+        z-index: 20000;
+        font-weight: 600;
+        animation: slideIn 0.3s ease;
+      `;
+      toast.textContent = '✓ ' + message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
     }
 
     function proceedToPayment(bookingId, reference, totalFare) {
@@ -620,6 +1120,23 @@
         </div>
       `;
     }
+
+    // Close modal when clicking outside
+    document.getElementById('reviewModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeReviewModal();
+      }
+    });
+
+    // Add keyframe animation for toast
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100px); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
   </script>
 </body>
 </html>
