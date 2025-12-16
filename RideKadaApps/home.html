@@ -133,6 +133,28 @@
       font-size: 14px;
     }
 
+    /* My Bookings Button Style */
+    .bookings-btn {
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .bookings-btn:hover {
+      background: linear-gradient(135deg, #27ae60, #229954);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .announcements-banner {
@@ -143,6 +165,11 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 5px;
+      }
+
+      .user-section {
+        flex-wrap: wrap;
+        gap: 10px;
       }
     }
   </style>
@@ -157,7 +184,12 @@
   </div>
 
     <div class="user-section">
-      <button id="publishBtn" class="publish-btn">Publish a Ride +</button>
+      <!-- My Bookings Button -->
+      <button class="bookings-btn" onclick="window.location.href='my_bookings.html'">
+        📋 My Bookings
+      </button>
+
+  
 
       <!-- PROFILE BUTTON + DROPDOWN -->
       <div class="profile-wrapper">

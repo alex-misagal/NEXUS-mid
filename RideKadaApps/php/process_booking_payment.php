@@ -1,6 +1,6 @@
 <?php
 // RideKadaApps/php/process_booking_payment.php
-// Process payment for CONFIRMED bookings only
+// FIXED VERSION - Process payment for CONFIRMED bookings only
 
 header('Content-Type: application/json');
 session_start();
@@ -22,6 +22,9 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     echo json_encode(['success' => false, 'message' => 'Invalid JSON data']);
     exit;
 }
+
+// Log the incoming request for debugging
+error_log("Payment request received: " . json_encode($input));
 
 // Required fields
 $requiredFields = ['bookingId', 'totalFare', 'paymentMethod'];
@@ -63,11 +66,20 @@ try {
     // Start transaction
     $conn->begin_transaction();
 
-    // 1. Verify booking exists and is confirmed
+    // 1. Get booking details and verify status
     $checkBookingStmt = $conn->prepare("
-        SELECT rb.BookingID, rb.UserID, rb.PublishedRideID, rb.BookingStatus, 
-               rb.PaymentStatus, rb.TotalFare, rb.SeatsBooked,
-               pr.Destination, pr.RideDate, pr.RideTime, pr.DriverID
+        SELECT 
+            rb.BookingID, 
+            rb.UserID, 
+            rb.PublishedRideID, 
+            rb.BookingStatus, 
+            rb.PaymentStatus, 
+            rb.TotalFare, 
+            rb.SeatsBooked,
+            pr.Destination, 
+            pr.RideDate, 
+            pr.RideTime, 
+            pr.DriverID
         FROM ride_bookings rb
         JOIN published_rides pr ON rb.PublishedRideID = pr.PublishedRideID
         WHERE rb.BookingID = ?
@@ -89,19 +101,23 @@ try {
     $booking = $bookingResult->fetch_assoc();
     $checkBookingStmt->close();
     
-    // Verify booking is confirmed
+    // Log booking status for debugging
+    error_log("Booking Status: " . $booking['BookingStatus'] . ", Payment Status: " . $booking['PaymentStatus']);
+    
+    // CRITICAL CHECK: Verify booking is confirmed by driver
     if ($booking['BookingStatus'] !== 'Confirmed') {
-        throw new Exception("Booking is not confirmed. Current status: " . $booking['BookingStatus']);
+        throw new Exception("This booking has not been confirmed by the driver yet. Current status: " . $booking['BookingStatus']);
     }
     
-    // Verify not already paid
+    // CRITICAL CHECK: Verify not already paid
     if ($booking['PaymentStatus'] === 'Paid') {
-        throw new Exception("This booking has already been paid");
+        throw new Exception("This booking has already been paid for");
     }
     
     // Verify fare amount matches
     if (abs($booking['TotalFare'] - $totalFare) > 0.01) {
-        throw new Exception("Fare amount mismatch");
+        error_log("Fare mismatch - Expected: " . $booking['TotalFare'] . ", Received: " . $totalFare);
+        throw new Exception("Fare amount mismatch. Please refresh and try again.");
     }
     
     // Verify user owns this booking (if userId provided)
@@ -109,30 +125,10 @@ try {
         throw new Exception("Unauthorized: This booking belongs to another user");
     }
 
-    // 2. Update booking payment status
-    $updateBookingStmt = $conn->prepare("
-        UPDATE ride_bookings 
-        SET PaymentStatus = 'Paid',
-            BookingStatus = 'Confirmed'
-        WHERE BookingID = ?
-    ");
-    
-    if (!$updateBookingStmt) {
-        throw new Exception("Failed to prepare booking update: " . $conn->error);
-    }
-    
-    $updateBookingStmt->bind_param("i", $bookingId);
-    
-    if (!$updateBookingStmt->execute()) {
-        throw new Exception("Failed to update booking: " . $updateBookingStmt->error);
-    }
-    
-    $updateBookingStmt->close();
-
-    // 3. Create payment record
+    // 2. Create payment record FIRST
     $paymentStmt = $conn->prepare("
-        INSERT INTO payment (BookingID, Amount, PaymentMethod, Status)
-        VALUES (?, ?, ?, 'Completed')
+        INSERT INTO payment (BookingID, Amount, PaymentMethod, PaymentDate, Status)
+        VALUES (?, ?, ?, NOW(), 'Completed')
     ");
     
     if (!$paymentStmt) {
@@ -146,7 +142,36 @@ try {
     }
     
     $paymentId = $conn->insert_id;
+    error_log("Payment record created with ID: " . $paymentId);
     $paymentStmt->close();
+
+    // 3. Update booking payment status
+    $updateBookingStmt = $conn->prepare("
+        UPDATE ride_bookings 
+        SET PaymentStatus = 'Paid',
+            BookingStatus = 'Confirmed'
+        WHERE BookingID = ? AND PaymentStatus = 'Unpaid'
+    ");
+    
+    if (!$updateBookingStmt) {
+        throw new Exception("Failed to prepare booking update: " . $conn->error);
+    }
+    
+    $updateBookingStmt->bind_param("i", $bookingId);
+    
+    if (!$updateBookingStmt->execute()) {
+        throw new Exception("Failed to update booking: " . $updateBookingStmt->error);
+    }
+    
+    // Check if any rows were actually updated
+    $rowsAffected = $updateBookingStmt->affected_rows;
+    error_log("Booking update affected rows: " . $rowsAffected);
+    
+    if ($rowsAffected === 0) {
+        throw new Exception("Booking payment status could not be updated. It may have already been paid.");
+    }
+    
+    $updateBookingStmt->close();
 
     // 4. Log transaction history
     $transactionDescription = "Payment for ride to " . $booking['Destination'] . 
@@ -156,14 +181,15 @@ try {
     $tableCheck = $conn->query("SHOW TABLES LIKE 'transactionhistory'");
     if ($tableCheck && $tableCheck->num_rows > 0) {
         $transactionStmt = $conn->prepare("
-            INSERT INTO transactionhistory (UserID, Amount, TransactionType, Description)
-            VALUES (?, ?, 'Payment', ?)
+            INSERT INTO transactionhistory (PaymentID, TransactionDate, TotalAmount, TransactionType)
+            VALUES (?, NOW(), ?, 'Ride Payment')
         ");
         
         if ($transactionStmt) {
-            $transactionStmt->bind_param("ids", $booking['UserID'], $totalFare, $transactionDescription);
+            $transactionStmt->bind_param("id", $paymentId, $totalFare);
             $transactionStmt->execute();
             $transactionStmt->close();
+            error_log("Transaction history recorded");
         }
     }
 
@@ -185,11 +211,13 @@ try {
             $notifyStmt->bind_param("iss", $driverId, $notificationTitle, $notificationMessage);
             $notifyStmt->execute();
             $notifyStmt->close();
+            error_log("Driver notification sent");
         }
     }
 
     // Commit transaction
     $conn->commit();
+    error_log("Payment transaction committed successfully");
 
     // Generate transaction reference
     $transactionRef = 'TXN' . str_pad($paymentId, 10, '0', STR_PAD_LEFT);
@@ -204,10 +232,13 @@ try {
     ]);
 
 } catch (Exception $e) {
+    // Rollback transaction on error
     if (isset($conn) && $conn->ping()) {
         $conn->rollback();
+        error_log("Transaction rolled back due to error");
     }
     
+    // Log error
     error_log("Payment processing error: " . $e->getMessage());
     
     echo json_encode([
