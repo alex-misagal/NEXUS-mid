@@ -878,14 +878,33 @@ app.get('/api/admin/logs', requireAuth, async (req, res) => {
   }
 });
 
+// Update the announcement endpoint in your ridekada-admin/server.js
+
+// POST announcement - UPDATED VERSION
 app.post('/api/admin/announcement', requireAuth, async (req, res) => {
   try {
-    const { message } = req.body;
-    console.log('Announcement:', message);
+    const { message, title } = req.body;
+    const adminId = req.session.adminId;
+    
+    if (!message || message.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Announcement message is required'
+      });
+    }
+    
+    // Insert announcement into database
+    const [result] = await pool.query(
+      'INSERT INTO announcements (AdminID, Title, Message, IsActive) VALUES (?, ?, ?, 1)',
+      [adminId, title || 'Announcement', message.trim()]
+    );
+    
+    console.log('Announcement published:', { id: result.insertId, message });
     
     res.json({
       success: true,
-      message: 'Announcement published successfully'
+      message: 'Announcement published successfully',
+      announcementId: result.insertId
     });
   } catch (error) {
     console.error('Error posting announcement:', error);
@@ -896,6 +915,129 @@ app.post('/api/admin/announcement', requireAuth, async (req, res) => {
     });
   }
 });
+
+// GET all announcements (for admin dashboard)
+app.get('/api/admin/announcements', requireAuth, async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        a.AnnouncementID,
+        a.Title,
+        a.Message,
+        a.CreatedAt,
+        a.IsActive,
+        ad.Username as AdminUsername
+      FROM announcements a
+      LEFT JOIN admin ad ON a.AdminID = ad.AdminID
+      ORDER BY a.CreatedAt DESC
+      LIMIT 50
+    `);
+    
+    res.json({
+      success: true,
+      count: rows.length,
+      announcements: rows
+    });
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch announcements',
+      error: error.message
+    });
+  }
+});
+
+// Toggle announcement active status
+app.put('/api/admin/announcement/:id/toggle', requireAuth, async (req, res) => {
+  try {
+    await pool.query(
+      'UPDATE announcements SET IsActive = NOT IsActive WHERE AnnouncementID = ?',
+      [req.params.id]
+    );
+    
+    res.json({
+      success: true,
+      message: 'Announcement status updated'
+    });
+  } catch (error) {
+    console.error('Error updating announcement:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update announcement'
+    });
+  }
+});
+
+// Delete announcement
+app.delete('/api/admin/announcement/:id', requireAuth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM announcements WHERE AnnouncementID = ?', [req.params.id]);
+    
+    res.json({
+      success: true,
+      message: 'Announcement deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting announcement:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete announcement'
+    });
+  }
+});
+
+// Update dashboard stats to include real announcement count
+// REPLACE the existing /api/admin/dashboard-stats endpoint with this:
+app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
+  try {
+    const [activeDrivers] = await pool.query(
+      "SELECT COUNT(*) as count FROM driver WHERE Status = 'Active'"
+    );
+    
+    const [passengers] = await pool.query('SELECT COUNT(*) as count FROM user');
+    
+    const [earnings] = await pool.query(
+      "SELECT COALESCE(SUM(Amount), 0) as total FROM payment WHERE Status = 'Completed'"
+    );
+    
+    const [expenses] = await pool.query(
+      "SELECT COALESCE(SUM(TotalFare), 0) as total FROM booking WHERE Status = 'Completed'"
+    );
+    
+    const [availableRides] = await pool.query(
+      "SELECT COUNT(*) as count FROM driver WHERE Status = 'Active'"
+    );
+    
+    // Get real announcement count
+    const [announcementCount] = await pool.query(
+      "SELECT COUNT(*) as count FROM announcements WHERE IsActive = 1"
+    );
+    
+    const totalUsers = activeDrivers[0].count + passengers[0].count;
+    
+    res.json({
+      success: true,
+      stats: {
+        activeDrivers: activeDrivers[0].count,
+        registeredPassengers: passengers[0].count,
+        totalEarnings: parseFloat(earnings[0].total),
+        announcements: announcementCount[0].count, // Real count now
+        totalExpenses: parseFloat(expenses[0].total),
+        availableRides: availableRides[0].count,
+        totalUsers: totalUsers
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch dashboard stats',
+      error: error.message
+    });
+  }
+});
+
 
 // Root endpoint
 app.get('/', (req, res) => {
