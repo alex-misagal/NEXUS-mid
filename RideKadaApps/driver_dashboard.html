@@ -58,6 +58,10 @@
         <span class="sidebar-icon">💰</span>
         <span class="sidebar-text">Earnings</span>
       </div>
+      <div class="sidebar-item" data-view="documents">
+        <span class="sidebar-icon">📄</span>
+        <span class="sidebar-text">Documents</span>
+      </div>
     </div>
 
     <!-- Content Area -->
@@ -104,6 +108,9 @@
             </button>
             <button class="action-btn tertiary" onclick="switchView('rides')">
               🚗 Manage Rides
+            </button>
+            <button class="action-btn secondary" onclick="window.location.href='driver_documents.html'">
+              📄 Manage Documents
             </button>
           </div>
         </div>
@@ -275,5 +282,37 @@
   </div>
 
   <script src="javascript/driver_dashboard.js"></script>
+  
+  <!-- Documents Navigation Handler -->
+  <script>
+    // Add documents navigation handling after the main script loads
+    (function() {
+      // Wait for DOM to be ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initDocumentsNav);
+      } else {
+        initDocumentsNav();
+      }
+      
+      function initDocumentsNav() {
+        // Find the documents sidebar item
+        const documentsItem = document.querySelector('.sidebar-item[data-view="documents"]');
+        
+        if (documentsItem) {
+          // Add click handler with higher priority
+          documentsItem.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Navigate to documents page
+            window.location.href = 'driver_documents.html';
+          }, true); // Use capture phase for higher priority
+          
+          console.log('Documents navigation initialized');
+        }
+      }
+    })();
+  </script>
 </body>
 </html>

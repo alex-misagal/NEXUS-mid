@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RideKada - Upload Documents</title>
+  <link rel="stylesheet" href="css/driver_dashboard.css">
+  <style>
+    .documents-page {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 0 30px;
+    }
+
+    .page-title {
+      font-size: 32px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .page-subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+
+    .upload-section {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      margin-bottom: 30px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .upload-form {
+      display: grid;
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .form-group select {
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .file-input-button {
+      background: #f8f9fa;
+      border: 2px dashed #3498db;
+      border-radius: 8px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .file-input-button:hover {
+      background: #e3f2fd;
+      border-color: #2980b9;
+    }
+
+    .file-input-button.has-file {
+      background: #d4edda;
+      border-color: #2ecc71;
+      border-style: solid;
+    }
+
+    .file-icon {
+      font-size: 48px;
+      color: #3498db;
+    }
+
+    .file-input-button.has-file .file-icon {
+      color: #2ecc71;
+    }
+
+    .file-input-text {
+      font-size: 16px;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .file-input-subtext {
+      font-size: 13px;
+      color: #999;
+    }
+
+    .file-name-display {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #333;
+      text-align: center;
+    }
+
+    input[type="file"] {
+      position: absolute;
+      left: -9999px;
+    }
+
+    .btn-upload {
+      background: #3498db;
+      color: white;
+      padding: 14px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-upload:hover {
+      background: #2980b9;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    }
+
+    .btn-upload:disabled {
+      background: #95a5a6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .documents-list {
+      display: grid;
+      gap: 20px;
+    }
+
+    .document-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      border-left: 4px solid #3498db;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s;
+    }
+
+    .document-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+    }
+
+    .document-card.approved {
+      border-left-color: #2ecc71;
+    }
+
+    .document-card.rejected {
+      border-left-color: #e74c3c;
+    }
+
+    .document-info {
+      flex: 1;
+    }
+
+    .document-type {
+      font-size: 18px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .document-details {
+      display: flex;
+      gap: 20px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .document-meta {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .document-status {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .document-status.pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .document-status.approved {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .document-status.rejected {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .document-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn-view, .btn-delete {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-view {
+      background: #3498db;
+      color: white;
+    }
+
+    .btn-view:hover {
+      background: #2980b9;
+    }
+
+    .btn-delete {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .btn-delete:hover {
+      background: #c0392b;
+    }
+
+    .no-documents {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+
+    .no-documents-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+
+    .info-alert {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      font-size: 14px;
+      color: #0d47a1;
+    }
+
+    .error-alert {
+      background: #ffebee;
+      border-left: 4px solid #f44336;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      font-size: 14px;
+      color: #c62828;
+    }
+
+    .success-alert {
+      background: #e8f5e9;
+      border-left: 4px solid #4caf50;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      font-size: 14px;
+      color: #2e7d32;
+    }
+
+    .rejection-reason {
+      margin-top: 10px;
+      padding: 10px;
+      background: #ffebee;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #c62828;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="logo-section">
+      <img src="media/logo.png" alt="RideKada Logo" class="logo-circle">
+      <span class="brand-name">RideKada</span>
+    </div>
+
+    <div class="user-section">
+      <button class="action-btn primary" onclick="window.location.href='driver_dashboard.html'">
+        ← Back to Dashboard
+      </button>
+      <div class="profile-wrapper">
+        <div id="userIcon" class="user-icon">👤</div>
+        <div id="profileDropdown" class="profile-dropdown">
+          <a href="profile.html" class="dropdown-item">View Profile</a>
+          <a href="#" id="logoutLink" class="dropdown-item">Logout</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="documents-page">
+    <h1 class="page-title">📄 Document Management</h1>
+    <p class="page-subtitle">Upload and manage your driver's license, vehicle registration, and other required documents.</p>
+
+    <div class="info-alert">
+      ℹ️ <strong>Important:</strong> Please upload clear, readable copies of your documents. Accepted formats: JPG, PNG, PDF (max 5MB per file). Documents will be reviewed by admin for verification.
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <!-- Upload Section -->
+    <div class="upload-section">
+      <div class="section-header">
+        <h2 class="section-title">Upload New Document</h2>
+      </div>
+
+      <form id="uploadForm" class="upload-form">
+        <div class="form-group">
+          <label for="documentType">Document Type *</label>
+          <select id="documentType" name="documentType" required>
+            <option value="">-- Select Document Type --</option>
+            <option value="License">Driver's License</option>
+            <option value="VehicleRegistration">Vehicle Registration (OR/CR)</option>
+            <option value="Insurance">Vehicle Insurance</option>
+            <option value="Other">Other Document</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Select File *</label>
+          <div class="file-input-wrapper">
+            <label for="documentFile" class="file-input-button" id="fileInputButton">
+              <span class="file-icon">📁</span>
+              <span class="file-input-text">Click to select file or drag and drop</span>
+              <span class="file-input-subtext">Supported: JPG, PNG, PDF (Max 5MB)</span>
+            </label>
+            <input type="file" id="documentFile" name="document" accept=".jpg,.jpeg,.png,.pdf" required>
+            <div id="fileNameDisplay" class="file-name-display" style="display: none;"></div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-upload" id="uploadButton">
+          📤 Upload Document
+        </button>
+      </form>
+    </div>
+
+    <!-- Documents List -->
+    <div class="upload-section">
+      <div class="section-header">
+        <h2 class="section-title">My Documents</h2>
+        <button class="btn-view" onclick="loadDocuments()">🔄 Refresh</button>
+      </div>
+
+      <div id="documentsList" class="documents-list">
+        <div class="no-documents">
+          <div class="no-documents-icon">📄</div>
+          <p>Loading documents...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentDriver = null;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      currentDriver = getStoredUser();
+      
+      if (!currentDriver || currentDriver.UserType !== 'Driver') {
+        alert('Please login as a driver to access this page');
+        window.location.href = 'index.html';
+        return;
+      }
+
+      setupProfileDropdown();
+      setupFileInput();
+      setupUploadForm();
+      loadDocuments();
+    });
+
+    function getStoredUser() {
+      try {
+        const data = sessionStorage.getItem('user');
+        return data ? JSON.parse(data) : null;
+      } catch (e) {
+        console.error('Failed to parse user', e);
+        return null;
+      }
+    }
+
+    function setupProfileDropdown() {
+      const userIcon = document.getElementById('userIcon');
+      const dropdown = document.getElementById('profileDropdown');
+      const logoutLink = document.getElementById('logoutLink');
+
+      if (userIcon && dropdown) {
+        userIcon.addEventListener('click', (e) => {
+          e.stopPropagation();
+          dropdown.classList.toggle('show');
+        });
+      }
+
+      if (logoutLink) {
+        logoutLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (confirm('Logout?')) {
+            sessionStorage.removeItem('user');
+            window.location.href = 'index.html';
+          }
+        });
+      }
+
+      document.addEventListener('click', (e) => {
+        if (!userIcon?.contains(e.target) && !dropdown?.contains(e.target)) {
+          dropdown?.classList.remove('show');
+        }
+      });
+    }
+
+    function setupFileInput() {
+      const fileInput = document.getElementById('documentFile');
+      const fileButton = document.getElementById('fileInputButton');
+      const fileDisplay = document.getElementById('fileNameDisplay');
+
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        
+        if (file) {
+          // Check file size (5MB)
+          if (file.size > 5 * 1024 * 1024) {
+            showAlert('File size exceeds 5MB limit', 'error');
+            fileInput.value = '';
+            return;
+          }
+
+          // Check file type
+          const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+          if (!allowedTypes.includes(file.type)) {
+            showAlert('Invalid file type. Only JPG, PNG, and PDF are allowed.', 'error');
+            fileInput.value = '';
+            return;
+          }
+
+          fileButton.classList.add('has-file');
+          fileDisplay.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+          fileDisplay.style.display = 'block';
+        } else {
+          fileButton.classList.remove('has-file');
+          fileDisplay.style.display = 'none';
+        }
+      });
+    }
+
+    function setupUploadForm() {
+      const form = document.getElementById('uploadForm');
+      
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const documentType = document.getElementById('documentType').value;
+        const fileInput = document.getElementById('documentFile');
+        const file = fileInput.files[0];
+        
+        if (!documentType || !file) {
+          showAlert('Please select document type and file', 'error');
+          return;
+        }
+
+        const uploadButton = document.getElementById('uploadButton');
+        const originalText = uploadButton.textContent;
+        uploadButton.disabled = true;
+        uploadButton.textContent = '⏳ Uploading...';
+
+        const formData = new FormData();
+        formData.append('driverId', currentDriver.DriverID);
+        formData.append('documentType', documentType);
+        formData.append('document', file);
+
+        try {
+          const response = await fetch('php/upload_document.php', {
+            method: 'POST',
+            body: formData
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showAlert(`✅ ${data.message}`, 'success');
+            form.reset();
+            document.getElementById('fileInputButton').classList.remove('has-file');
+            document.getElementById('fileNameDisplay').style.display = 'none';
+            loadDocuments();
+          } else {
+            showAlert(`❌ ${data.message}`, 'error');
+          }
+        } catch (error) {
+          console.error('Upload error:', error);
+          showAlert('Failed to upload document. Please try again.', 'error');
+        } finally {
+          uploadButton.disabled = false;
+          uploadButton.textContent = originalText;
+        }
+      });
+    }
+
+    async function loadDocuments() {
+      const container = document.getElementById('documentsList');
+      container.innerHTML = '<div class="no-documents"><div class="no-documents-icon">⏳</div><p>Loading documents...</p></div>';
+
+      console.log('Loading documents for driver:', currentDriver.DriverID);
+
+      try {
+        const url = `php/get_driver_documents.php?driverId=${currentDriver.DriverID}`;
+        console.log('Fetching from:', url);
+        
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (data.success) {
+          if (data.documents.length === 0) {
+            container.innerHTML = `
+              <div class="no-documents">
+                <div class="no-documents-icon">📄</div>
+                <p><strong>No documents uploaded yet</strong></p>
+                <p style="color:#999; font-size:14px; margin-top:10px;">Upload your driver's license and vehicle registration to get started.</p>
+              </div>
+            `;
+            return;
+          }
+
+          container.innerHTML = data.documents.map(doc => {
+            const docTypeLabels = {
+              'License': '🪪 Driver\'s License',
+              'VehicleRegistration': '🚗 Vehicle Registration',
+              'Insurance': '📋 Insurance',
+              'Other': '📄 Other Document'
+            };
+
+            const statusClass = doc.status.toLowerCase();
+            const uploadDate = new Date(doc.uploadedAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            });
+
+            return `
+              <div class="document-card ${statusClass}">
+                <div class="document-info">
+                  <div class="document-type">${docTypeLabels[doc.documentType] || doc.documentType}</div>
+                  <div class="document-details">
+                    <div class="document-meta">📁 ${doc.fileName}</div>
+                    <div class="document-meta">📏 ${formatFileSize(doc.fileSize)}</div>
+                    <div class="document-meta">📅 ${uploadDate}</div>
+                  </div>
+                  ${doc.rejectionReason ? `
+                    <div class="rejection-reason">
+                      <strong>❌ Rejection Reason:</strong> ${doc.rejectionReason}
+                    </div>
+                  ` : ''}
+                </div>
+                <div class="document-actions">
+                  <span class="document-status ${statusClass}">${doc.status}</span>
+                  <button class="btn-view" onclick="viewDocument('${doc.filePath}')">👁️ View</button>
+                  <button class="btn-delete" onclick="deleteDocument(${doc.documentId})">🗑️ Delete</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          console.error('Load failed:', data.message, data.debug);
+          
+          // Show detailed error to user
+          container.innerHTML = `
+            <div class="no-documents">
+              <div class="no-documents-icon">⚠️</div>
+              <p style="color:#e74c3c;"><strong>Error: ${data.message}</strong></p>
+              ${data.debug ? `<p style="color:#999; font-size:13px; margin-top:10px;">${data.debug}</p>` : ''}
+              ${data.action ? `<p style="color:#2196f3; font-size:13px; margin-top:10px;"><strong>Action needed:</strong> ${data.action}</p>` : ''}
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Load documents error:', error);
+        container.innerHTML = `
+          <div class="no-documents">
+            <div class="no-documents-icon">⚠️</div>
+            <p style="color:#e74c3c;"><strong>Error loading documents</strong></p>
+            <p style="color:#999; font-size:13px; margin-top:10px;">${error.message}</p>
+            <p style="color:#2196f3; font-size:13px; margin-top:10px;">Check browser console (F12) for details</p>
+          </div>
+        `;
+      }
+    }
+
+    function viewDocument(filePath) {
+      window.open(filePath, '_blank');
+    }
+
+    async function deleteDocument(documentId) {
+      if (!confirm('Are you sure you want to delete this document?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch('php/delete_document.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            documentId: documentId,
+            driverId: currentDriver.DriverID
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showAlert('✅ Document deleted successfully', 'success');
+          loadDocuments();
+        } else {
+          showAlert('❌ Failed to delete document', 'error');
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        showAlert('❌ Failed to delete document', 'error');
+      }
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    function showAlert(message, type) {
+      const container = document.getElementById('alertContainer');
+      const alertClass = type === 'error' ? 'error-alert' : type === 'success' ? 'success-alert' : 'info-alert';
+      
+      container.innerHTML = `<div class="${alertClass}">${message}</div>`;
+      
+      setTimeout(() => {
+        container.innerHTML = '';
+      }, 5000);
+    }
+  </script>
+
+</body>
+</html>
