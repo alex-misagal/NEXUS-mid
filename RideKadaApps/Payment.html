@@ -5,135 +5,259 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RideKada - Payment</title>
   <link rel="stylesheet" href="css/payment.css">
+  <style>
+    /* Additional styles for the new layout */
+    .payment-section {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111a20;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #5dade2;
+    }
+
+    .payment-method-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .payment-card {
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+    }
+
+    .payment-card:hover {
+      border-color: #5dade2;
+      background: #f8fbfd;
+    }
+
+    .payment-card.selected {
+      border-color: #5dade2;
+      background: #e3f2fd;
+    }
+
+    .payment-card-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .payment-card-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .info-field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-field-label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-field-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 5px;
+    }
+
+    .payment-summary {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .summary-row.total {
+      font-size: 20px;
+      font-weight: 700;
+      color: #2ecc71;
+      padding-top: 15px;
+      border-top: 2px solid #dee2e6;
+      margin-top: 15px;
+    }
+  </style>
 </head>
 <body>
   <!-- Navigation -->
   <nav class="navbar">
-  <div class="logo-section">
-    <img src="media/logo.png" alt="RideKada Logo" class="logo-circle">
-    <span class="brand-name">RideKada</span>
-  </div>
+    <div class="logo-section">
+      <img src="media/logo.png" alt="RideKada Logo" class="logo-circle">
+      <span class="brand-name">RideKada</span>
+    </div>
 
     <div class="user-section">
-      <button class="publish-btn" onclick="window.location.href='home.html'">Publish a Ride +</button>
+      <button class="publish-btn" onclick="window.location.href='my_bookings.html'">Back to Bookings</button>
       <div class="user-icon">👤</div>
     </div>
   </nav>
 
   <!-- Payment Container -->
   <div class="payment-container">
-    <!-- Left Section -->
-    <div class="payment-left">
-      <div class="amount-section">
-        <div class="amount-label">Amount to pay:</div>
-        <div class="amount-display" id="amountDisplay">₱0.00</div>
-      </div>
-
-      <div class="payment-method-section">
-        <div class="payment-method-label">Select mode of payment:</div>
-        
-        <div class="payment-option cash-disabled" onclick="selectPayment('Cash', this)">
-          <span>Cash <span style="font-size: 12px; color: #999;">(Not Available)</span></span>
-          <input type="radio" name="payment" value="Cash" disabled>
+    <!-- Booking Information Section -->
+    <div class="payment-section">
+      <h3 class="section-title">📋 Booking Information</h3>
+      
+      <div class="info-grid">
+        <div class="info-field">
+          <span class="info-field-label">Reference Number</span>
+          <span class="info-field-value" id="booking-reference">Loading...</span>
         </div>
 
-        <div class="payment-option selected" onclick="selectPayment('GCash', this)">
-          <span>GCash</span>
-          <input type="radio" name="payment" value="GCash" checked>
+        <div class="info-field">
+          <span class="info-field-label">Route</span>
+          <span class="info-field-value" id="ride-route">Loading...</span>
+        </div>
+
+        <div class="info-field">
+          <span class="info-field-label">Date & Time</span>
+          <span class="info-field-value" id="ride-datetime">Loading...</span>
+        </div>
+
+        <div class="info-field">
+          <span class="info-field-label">Passengers</span>
+          <span class="info-field-value" id="ride-passengers">Loading...</span>
         </div>
       </div>
     </div>
 
-    <!-- Right Section -->
-    <div class="payment-right">
-      <div class="booking-details">
-        <h3>Booking details:</h3>
-        
-        <div class="detail-group">
-          <div class="detail-label">Driver Name</div>
-          <input type="text" class="detail-input" id="driverName" readonly>
+    <!-- Driver Information Section -->
+    <div class="payment-section">
+      <h3 class="section-title">🚗 Driver Information</h3>
+      
+      <div class="info-grid">
+        <div class="info-field">
+          <span class="info-field-label">Driver Name</span>
+          <span class="info-field-value" id="driver-name">Loading...</span>
         </div>
 
-        <div class="detail-group">
-          <div class="detail-label">Contact No.</div>
-          <input type="text" class="detail-input" id="driverPhone" readonly>
+        <div class="info-field">
+          <span class="info-field-label">Contact Number</span>
+          <span class="info-field-value" id="driver-phone">Loading...</span>
         </div>
 
-        <div class="detail-group">
-          <div class="detail-label">Vehicle</div>
-          <input type="text" class="detail-input" id="vehicle" readonly>
+        <div class="info-field">
+          <span class="info-field-label">Vehicle</span>
+          <span class="info-field-value" id="driver-vehicle">Loading...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Method Section -->
+    <div class="payment-section">
+      <h3 class="section-title">💳 Select Payment Method</h3>
+      
+      <div class="payment-method-grid">
+        <div class="payment-card selected" data-method="GCash" onclick="selectPaymentMethod(this)">
+          <div class="payment-card-icon">📱</div>
+          <div class="payment-card-name">GCash</div>
         </div>
 
-        <div class="detail-group">
-          <div class="detail-label">From</div>
-          <input type="text" class="detail-input" id="fromLocation" readonly>
+        <div class="payment-card" data-method="PayMaya" onclick="selectPaymentMethod(this)">
+          <div class="payment-card-icon">💰</div>
+          <div class="payment-card-name">PayMaya</div>
         </div>
 
-        <div class="detail-group">
-          <div class="detail-label">Destination</div>
-          <input type="text" class="detail-input" id="destination" readonly>
+        <div class="payment-card" data-method="Cash" onclick="selectPaymentMethod(this)" style="opacity: 0.5; cursor: not-allowed;">
+          <div class="payment-card-icon">💵</div>
+          <div class="payment-card-name">Cash (Not Available)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Summary Section -->
+    <div class="payment-section">
+      <h3 class="section-title">💵 Payment Summary</h3>
+      
+      <div class="payment-summary">
+        <div class="summary-row">
+          <span>Price per Seat:</span>
+          <span id="price-per-seat">₱0.00</span>
         </div>
 
-        <div class="detail-group">
-          <div class="detail-label">Date</div>
-          <input type="text" class="detail-input" id="rideDate" readonly>
+        <div class="summary-row">
+          <span>Number of Passengers:</span>
+          <span id="total-passengers">0</span>
         </div>
 
-        <div class="detail-group">
-          <div class="detail-label">Passengers</div>
-          <input type="text" class="detail-input" id="passengers" readonly>
+        <div class="summary-row">
+          <span>Subtotal:</span>
+          <span id="subtotal">₱0.00</span>
         </div>
 
-        <div class="payment-btn-section">
-          <div class="detail-label">Booking Payment:</div>
-          <button class="pay-btn" id="payBtn" onclick="processPayment()">
-            Pay ₱0.00 Via GCash
-          </button>
+        <div class="summary-row">
+          <span>Booking Fee:</span>
+          <span id="booking-fee">₱0.00</span>
+        </div>
+
+        <div class="summary-row total">
+          <span>Total Amount:</span>
+          <span id="total-amount">₱0.00</span>
         </div>
       </div>
 
-      <button class="cancel-btn" onclick="showCancelModal()">Cancel</button>
+      <button class="pay-btn" id="pay-now-btn" style="margin-top: 20px;">
+        💳 Proceed to Payment
+      </button>
+
+      <button class="cancel-btn" onclick="window.location.href='my_bookings.html'">
+        Cancel Payment
+      </button>
     </div>
   </div>
 
-  <!-- Payment Confirmation Modal -->
-  <div id="paymentConfirmModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-icon">💳</div>
-      <h2>Confirm Payment</h2>
-      <p>You are about to pay <strong id="confirmPaymentAmount">₱0.00</strong> via <strong id="confirmPaymentMethod">GCash</strong>.</p>
-      <p style="margin-top: 10px;">Do you want to proceed with this payment?</p>
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" onclick="closePaymentConfirmModal()">Cancel</button>
-        <button class="modal-btn modal-btn-confirm-payment" onclick="confirmPayment()">Confirm Payment</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Cancel Confirmation Modal -->
-  <div id="cancelModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-icon">⚠️</div>
-      <h2>Cancel Payment?</h2>
-      <p>Are you sure you want to cancel this payment? Your booking will not be confirmed.</p>
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" onclick="closeCancelModal()">No, Go Back</button>
-        <button class="modal-btn modal-btn-confirm" onclick="confirmCancel()">Yes, Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Success Modal -->
-  <div id="successModal" class="modal">
-    <div class="modal-content success-modal">
-      <div class="modal-icon">✓</div>
-      <h2>Payment Successful!</h2>
-      <p>Your booking has been confirmed. Thank you for choosing RideKada!</p>
-      <button class="modal-btn" onclick="window.location.href='home.html'">Return to Home</button>
-    </div>
-  </div>
-
-  <!-- Link to external JavaScript file -->
   <script src="javascript/payment.js"></script>
+  <script>
+    function selectPaymentMethod(card) {
+      // Prevent selecting Cash
+      if (card.dataset.method === 'Cash') {
+        return;
+      }
+
+      // Remove selected class from all cards
+      document.querySelectorAll('.payment-card').forEach(c => {
+        c.classList.remove('selected');
+      });
+
+      // Add selected class to clicked card
+      card.classList.add('selected');
+    }
+  </script>
 </body>
 </html>
