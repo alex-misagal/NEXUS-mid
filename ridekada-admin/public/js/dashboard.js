@@ -4,12 +4,15 @@ const API_URL = 'http://localhost:3001';
 let currentView = 'dashboard';
 let currentUserId = null;
 let currentUserType = null;
+let usersChart = null;
+let monthlyEarningsChart = null;
 
 // Check authentication on load
 window.addEventListener('DOMContentLoaded', async () => {
   await checkAuth();
   loadDashboardStats();
   loadLogs();
+  loadMonthlyEarnings();
   
   // Set up navigation
   document.querySelectorAll('.nav-item, .nav-subitem').forEach(item => {
@@ -776,3 +779,133 @@ window.addEventListener('click', (e) => {
     e.target.classList.remove('active');
   }
 });
+
+async function loadDashboardStats() {
+  try {
+    const response = await fetch(`${API_URL}/api/admin/dashboard-stats`, {
+      credentials: 'include'
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      const stats = data.stats;
+
+      document.getElementById('activeDrivers').textContent = stats.activeDrivers;
+      document.getElementById('registeredPassengers').textContent = stats.registeredPassengers;
+      document.getElementById('totalEarnings').textContent = `₱${stats.totalEarnings.toLocaleString()}`;
+      document.getElementById('announcements').textContent = stats.announcements;
+      document.getElementById('totalUsers').textContent = stats.totalUsers;
+      document.getElementById('availableRides').textContent = stats.availableRides;
+      document.getElementById('totalExpenses').textContent = `₱${stats.totalExpenses.toLocaleString()}`;
+
+      renderUsersChart(stats.activeDrivers, stats.registeredPassengers);
+    }
+  } catch (error) {
+    console.error('Error loading dashboard stats:', error);
+  }
+}
+
+function renderUsersChart(drivers, passengers) {
+  const ctx = document.getElementById('usersChart');
+
+  if (usersChart) {
+    usersChart.destroy();
+  }
+
+  usersChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Drivers', 'Passengers'],
+      datasets: [{
+        data: [drivers, passengers],
+        backgroundColor: ['#ef4444', '#3b82f6'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '70%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            boxWidth: 8,
+            padding: 15,
+            font: {
+              size: 12
+            }
+          }
+        },
+        tooltip: {
+          backgroundColor: '#111827',
+          titleFont: { size: 13 },
+          bodyFont: { size: 12 },
+          padding: 10,
+          cornerRadius: 8
+        }
+      }
+    }
+  });
+}
+
+async function loadMonthlyEarnings() {
+  try {
+    const res = await fetch('/api/admin/earnings/monthly', {
+      credentials: 'include'
+    });
+
+    const data = await res.json();
+
+    if (!data.success || data.earnings.length === 0) {
+      console.warn('No monthly earnings data');
+      return;
+    }
+
+    renderMonthlyEarningsChart(data.earnings);
+  } catch (err) {
+    console.error('Failed to load monthly earnings', err);
+  }
+}
+
+
+
+function renderMonthlyEarningsChart(data) {
+  const canvas = document.getElementById('dailyEarningsChart');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+
+  if (monthlyEarningsChart) {
+    monthlyEarningsChart.destroy();
+  }
+
+  monthlyEarningsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.map(d => d.month),
+      datasets: [{
+        label: 'Monthly Earnings',
+        data: data.map(d => d.total),
+        tension: 0.4,
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true }
+      },
+      scales: {
+        y: {
+          ticks: {
+            callback: value => '₱' + value.toLocaleString()
+          }
+        }
+      }
+    }
+  });
+}

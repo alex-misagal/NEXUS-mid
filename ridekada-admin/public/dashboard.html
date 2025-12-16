@@ -104,6 +104,36 @@
             <div class="stat-label">Total Expenses</div>
           </div>
         </div>
+       <!-- Dashboard Charts -->
+<div class="dashboard-charts">
+  <!-- Users Distribution -->
+  <div class="chart-card small">
+    <div class="chart-header">
+      <h3>Users Distribution</h3>
+      <span class="chart-sub">Drivers vs Passengers</span>
+    </div>
+    <canvas id="usersChart"></canvas>
+  </div>
+
+  <!-- Earnings Over Time -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <h3>Earnings Over Time</h3>
+      <span class="chart-sub">Monthly earnings summary</span>
+    </div>
+    <canvas id="earningsChart"></canvas>
+  </div>
+
+  <!-- Montly Earnings -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <h3>Monthly Earnings</h3>
+      <span class="chart-sub">Completed ride payments</span>
+    </div>
+    <canvas id="dailyEarningsChart"></canvas>
+  </div>
+</div>
+
 
         <!-- Logs & Announcements -->
         <div class="logs-announcements">
@@ -132,6 +162,8 @@
           </div>
         </div>
       </div>
+</div>
+      
 
       <!-- Manage Users - Full List View -->
       <div id="fullListView" class="view">
@@ -282,6 +314,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="js/dashboard.js"></script>
 </body>
 </html>

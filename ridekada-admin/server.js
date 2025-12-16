@@ -225,6 +225,32 @@ app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
   }
 });
 
+// Monthly Earnings
+app.get('/api/admin/earnings/monthly', requireAuth, async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        DATE_FORMAT(PaymentDate, '%Y-%m') AS month,
+        SUM(Amount) AS total
+      FROM payment
+      WHERE Status = 'Completed'
+      GROUP BY month
+      ORDER BY month
+    `);
+
+    res.json({
+      success: true,
+      earnings: rows
+    });
+  } catch (error) {
+    console.error('Monthly earnings error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch monthly earnings'
+    });
+  }
+});
+
 // ===== USER MANAGEMENT ROUTES =====
 
 // Get all users (drivers and passengers combined)
