@@ -1,6 +1,6 @@
 <?php
 // RideKadaApps/php/get_passenger_bookings.php
-// FIXED VERSION - Get all bookings with correct payment status
+// Get all bookings for a passenger with their status
 
 header('Content-Type: application/json');
 session_start();
@@ -19,7 +19,7 @@ if ($userId <= 0) {
 }
 
 try {
-    // Get all bookings for this passenger with detailed payment info
+    // Get all bookings for this passenger
     $query = "SELECT 
                 rb.BookingID,
                 rb.PublishedRideID,
@@ -36,13 +36,9 @@ try {
                 CONCAT(d.Fname, ' ', d.Lname) as DriverName,
                 d.PhoneNumber as DriverPhone,
                 d.Email as DriverEmail,
-                COALESCE(v.Model, 'Vehicle') as VehicleModel,
-                COALESCE(v.Color, '') as VehicleColor,
-                COALESCE(v.PlateNumber, 'N/A') as PlateNumber,
-                -- Check if payment actually exists
-                (SELECT COUNT(*) FROM payment p 
-                 WHERE p.BookingID = rb.BookingID 
-                 AND p.Status = 'Completed') as PaymentExists
+                v.Model as VehicleModel,
+                v.Color as VehicleColor,
+                v.PlateNumber
               FROM ride_bookings rb
               JOIN published_rides pr ON rb.PublishedRideID = pr.PublishedRideID
               JOIN driver d ON pr.DriverID = d.DriverID
@@ -61,31 +57,15 @@ try {
         $rideDateTime = date('M d, Y g:i A', strtotime($row['RideDate'] . ' ' . $row['RideTime']));
         $bookingDate = date('M d, Y g:i A', strtotime($row['BookingDate']));
         
-        // CRITICAL: Verify actual payment status
-        // If PaymentExists is 0, force PaymentStatus to 'Unpaid'
-        $actualPaymentStatus = ($row['PaymentExists'] > 0) ? 'Paid' : 'Unpaid';
-        
-        // Override the stored PaymentStatus if it doesn't match reality
-        if ($actualPaymentStatus !== $row['PaymentStatus']) {
-            error_log("Payment status mismatch for BookingID {$row['BookingID']}: Stored={$row['PaymentStatus']}, Actual={$actualPaymentStatus}");
-            
-            // Fix the database
-            $fixStmt = $conn->prepare("UPDATE ride_bookings SET PaymentStatus = ? WHERE BookingID = ?");
-            $fixStmt->bind_param("si", $actualPaymentStatus, $row['BookingID']);
-            $fixStmt->execute();
-            $fixStmt->close();
-        }
-        
         // Determine if payment is allowed
-        // Can pay ONLY if: Confirmed by driver AND not yet paid
-        $canPay = ($row['BookingStatus'] === 'Confirmed' && $actualPaymentStatus === 'Unpaid');
+        $canPay = ($row['BookingStatus'] === 'Confirmed' && $row['PaymentStatus'] === 'Unpaid');
         
         $bookings[] = [
             'bookingId' => $row['BookingID'],
             'publishedRideId' => $row['PublishedRideID'],
             'referenceNumber' => 'RKB' . str_pad($row['BookingID'], 8, '0', STR_PAD_LEFT),
             'status' => $row['BookingStatus'],
-            'paymentStatus' => $actualPaymentStatus, // Use verified status
+            'paymentStatus' => $row['PaymentStatus'],
             'canPay' => $canPay,
             'seatsBooked' => $row['SeatsBooked'],
             'totalFare' => $row['TotalFare'],
@@ -102,7 +82,7 @@ try {
                 'name' => $row['DriverName'],
                 'phone' => $row['DriverPhone'],
                 'email' => $row['DriverEmail'],
-                'vehicle' => trim($row['VehicleColor'] . ' ' . $row['VehicleModel']),
+                'vehicle' => $row['VehicleColor'] . ' ' . $row['VehicleModel'],
                 'plateNumber' => $row['PlateNumber']
             ]
         ];
