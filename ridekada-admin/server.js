@@ -36,9 +36,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Database configuration
 const dbConfig = {
   host: 'localhost',
-  user: 'root',
+  user: 'app_root',
   password: '',
-  database: 'nexus-mid',
+  database: 'nexusmid',
   port: 3306
 };
 
