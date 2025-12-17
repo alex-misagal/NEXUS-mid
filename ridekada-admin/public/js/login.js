@@ -1,6 +1,6 @@
 // RideKada Admin - Login Script
 
-const API_URL = 'http://localhost:3001';
+const API_URL = 'http://10.135.140.82:3002';
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
