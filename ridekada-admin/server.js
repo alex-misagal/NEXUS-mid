@@ -12,7 +12,7 @@ const PORT = 3002;
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3002',
+  origin: 'http://10.135.140.82:3002',
   credentials: true
 }));
 app.use(express.json());
