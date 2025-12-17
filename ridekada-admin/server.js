@@ -1060,7 +1060,7 @@ app.get('/health', (req, res) => {
 async function startServer() {
   await initializeDatabase();
   
-  app.listen(PORT, '0.0.0.0', () => {
+  app.listen(PORT, '10.135.140.82', () => {
     console.log(`✓ RideKada Admin Panel running on port ${PORT}`);
     console.log(`✓ Access at: http://localhost:${PORT}`);
     console.log(`✓ Default credentials: admin / admin123`);
