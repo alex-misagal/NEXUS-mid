@@ -14,7 +14,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   messageEl.style.display = 'block';
   
   try {
-    const response = await fetch(`${API_URL}/api/admin/login`, {
+    const response = await fetch(`/api/admin/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
