@@ -1,6 +1,6 @@
 // RideKada Admin - Dashboard Script
 
-const API_URL = 'http://localhost:3001';
+const API_URL = 'http://10.135.140.82:3002';
 let currentView = 'dashboard';
 let currentUserId = null;
 let currentUserType = null;
